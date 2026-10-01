@@ -1,0 +1,26 @@
+{
+  "name": "Elegant Escape - Doorstep Luxury Salon",
+  "short_name": "Elegant Escape",
+  "description": "Premium Doorstep Luxury Salon Services for Women & Men",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F8F6F2",
+  "theme_color": "#060504",
+  "icons": [
+    {
+      "src": "https://ik.imagekit.io/nsyr92pse/file_000000007260820b9b5c312bcdb076c4.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://ik.imagekit.io/nsyr92pse/file_000000007260820b9b5c312bcdb076c4.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["lifestyle", "beauty", "shopping"]
+}

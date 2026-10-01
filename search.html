@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="theme-color" content="#F8F6F2" />
+  <title>Search Services - Elegant Escape</title>
+
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            "luxury-black": "#060504",
+            "deep-espresso": "#17120D",
+            "warm-brown": "#31261C",
+            "champagne-gold": "#C9B299",
+            "soft-gold": "#D8C3A5",
+            "ivory": "#F3EFE9",
+            "warm-white": "#F8F6F2",
+            "muted-beige": "#DDD5CB",
+            "muted-rose": "#9E2A5B",
+            "neutral-gray": "#8B8B8B"
+          },
+          fontFamily: {
+            sans: ['"Inter"', '"Plus Jakarta Sans"', 'sans-serif'],
+            serif: ['"Plus Jakarta Sans"', 'serif']
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    body { background-color: #F8F6F2; color: #060504; -webkit-tap-highlight-color: transparent; }
+    .pt-safe { padding-top: env(safe-area-inset-top, 0px); }
+    .pb-safe { padding-bottom: env(safe-area-inset-bottom, 16px); }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+
+<body class="antialiased min-h-screen flex flex-col">
+
+  <!-- Top Sticky Search Bar (Auto-Focus + Clear + Back) -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-muted-beige/60 pt-safe shadow-sm">
+    <div class="max-w-2xl mx-auto px-4 py-3 flex items-center gap-2.5">
+      <!-- Back Arrow -->
+      <button onclick="window.history.back()" class="w-10 h-10 rounded-full bg-ivory flex items-center justify-center text-luxury-black active:scale-90 transition-transform flex-shrink-0" type="button" aria-label="Go Back">
+        <span class="material-symbols-outlined text-[20px]">arrow_back_ios_new</span>
+      </button>
+
+      <!-- Search Input Container -->
+      <div class="relative flex-grow flex items-center">
+        <input id="searchPageInput" type="text" autofocus autocomplete="off" placeholder="Search facials, waxing, packages..."
+          class="w-full h-11 pl-4 pr-10 rounded-2xl bg-ivory/80 border border-muted-beige/80 text-[13px] font-semibold text-luxury-black placeholder:text-neutral-gray focus:outline-none focus:border-warm-brown focus:bg-white transition-all shadow-inner" />
+        <button id="clearSearchBtn" onclick="clearSearchInput()" type="button" class="absolute right-3 w-6 h-6 rounded-full bg-neutral-gray/20 hover:bg-neutral-gray/40 flex items-center justify-center text-luxury-black hidden transition-colors">
+          <span class="material-symbols-outlined text-[15px]">close</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="w-full max-w-2xl mx-auto px-4 py-4 flex-grow flex flex-col gap-5 pb-24">
+
+    <!-- 1. Recent Searches Section (Shown when input is empty & history exists) -->
+    <section id="recentSearchesSection" class="hidden flex-col gap-2.5">
+      <div class="flex items-center justify-between">
+        <span class="text-[11px] font-bold uppercase tracking-wider text-neutral-gray">Recent Searches</span>
+        <button onclick="clearRecentSearches()" class="text-[10px] font-bold text-muted-rose uppercase tracking-wider hover:underline" type="button">Clear All</button>
+      </div>
+      <div id="recentSearchesList" class="flex flex-wrap gap-2"></div>
+    </section>
+
+    <!-- 2. Instant Text Suggestions List (Shown when typing) -->
+    <section id="suggestionsSection" class="hidden flex-col divide-y divide-muted-beige/40 rounded-2xl bg-white border border-muted-beige/60 overflow-hidden shadow-subtle">
+      <div id="suggestionsList" class="flex flex-col"></div>
+    </section>
+
+    <!-- 3. Top Results Cards Section -->
+    <section id="resultsSection" class="hidden flex-col gap-3">
+      <h3 id="resultsHeading" class="font-serif text-[15px] font-bold text-luxury-black">Top results</h3>
+      <div id="resultsList" class="flex flex-col gap-3"></div>
+    </section>
+
+    <!-- 4. Empty State (When no service matches) -->
+    <div id="searchEmptyState" class="hidden flex-col items-center justify-center py-16 text-center">
+      <span class="material-symbols-outlined text-[48px] text-muted-beige mb-3">search_off</span>
+      <h3 class="font-serif text-lg font-bold text-luxury-black">No services found</h3>
+      <p class="text-xs text-neutral-gray mt-1">Try searching for "Waxing", "Facial", or "Spa"</p>
+    </div>
+
+  </main>
+
+  <!-- Green Floating Cart Bar (Syncs with Cart) -->
+  <div id="searchBookingBar" style="bottom: env(safe-area-inset-bottom, 16px);" class="fixed left-0 right-0 w-full z-40 px-4 hidden transition-all duration-300">
+    <div onclick="window.location.href='booking.html'" class="max-w-2xl mx-auto bg-[#198728] hover:bg-[#146c20] text-white rounded-2xl py-2 px-3 pr-4 shadow-[0_8px_24px_rgba(25,135,40,0.4)] flex items-center justify-between cursor-pointer transition-all">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <div class="w-9 h-9 rounded-full bg-white p-0.5 flex-shrink-0 overflow-hidden shadow-sm">
+          <img id="searchCartBarImg" src="https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&q=80&w=200" alt="Cart" class="w-full h-full rounded-full object-cover" />
+        </div>
+        <div class="flex flex-col min-w-0">
+          <span id="searchCartBarCategory" class="font-bold text-[13px] text-white leading-tight truncate">Salon For Women</span>
+          <span class="text-[11px] text-white/90 font-medium leading-tight mt-0.5"><span id="searchCartCount">0</span> <span id="searchCartServiceWord">service</span> added • ₹<span id="searchCartTotal">0</span></span>
+        </div>
+      </div>
+      <div class="flex items-center gap-0.5 font-bold text-[13px] text-white flex-shrink-0 pl-2">
+        <span>View Cart</span>
+        <span class="material-symbols-outlined text-[17px]">chevron_right</span>
+      </div>
+    </div>
+  </div>
+
+  <script src="storage.js"></script>
+  <script src="search.js"></script>
+</body>
+</html>

@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport" />
+    <meta content="mobile_tab" name="shell-type" />
+    <title>Checkout &amp; Booking - Elegant Escape</title>
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "luxury-black": "#060504",
+                        "deep-espresso": "#17120D",
+                        "warm-brown": "#31261C",
+                        "champagne-gold": "#C9B299",
+                        "soft-gold": "#D8C3A5",
+                        "ivory": "#F3EFE9",
+                        "warm-white": "#F8F6F2",
+                        "muted-beige": "#DDD5CB",
+                        "dusty-rose": "#E7C4C4",
+                        "muted-rose": "#A66363",
+                        "sage-green": "#8CA58C",
+                        "neutral-gray": "#8B8B8B"
+                    },
+                    fontFamily: {
+                        serif: ['"Plus Jakarta Sans"', '"Inter"', 'system-ui', '-apple-system', 'sans-serif'],
+                        sans: ['"Inter"', '"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+                    },
+                    boxShadow: {
+
+                        'subtle': '0 2px 10px rgba(6, 5, 4, 0.03)',
+                        'floating': '0 -8px 32px -4px rgba(6, 5, 4, 0.08)',
+                        'card': '0 4px 16px -4px rgba(6, 5, 4, 0.04)'
+                    }
+                }
+            }
+        };
+    </script>
+    <style>
+        body { background-color: #F8F6F2; color: #060504; -webkit-tap-highlight-color: transparent; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .pt-safe { padding-top: env(safe-area-inset-top, 0px); }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom, 20px); }
+             /* Navigation Styles */
+        .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #8B8B8B; transition: color 0.3s ease; text-decoration: none; position: relative; height: 100%; }
+        .nav-item.active { color: #31261C; }
+        .nav-item.active::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 55%;
+            height: 3px;
+            background-color: #31261C;
+            border-radius: 0 0 4px 4px;
+        }
+        .nav-icon-box { display: flex; align-items: center; justify-content: center; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .nav-item.active .nav-icon-box { transform: translateY(-2px); }
+        .nav-item.active .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
+     .nav-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+        /* Radio date/time selection styling */
+        input[type="radio"] { display: none; }
+        input[type="radio"]:checked + div {
+            background-color: #31261C;
+            border-color: #31261C;
+            color: #F8F6F2;
+            box-shadow: 0 4px 12px rgba(49, 38, 28, 0.15);
+        }
+        input[type="radio"]:checked + div .text-neutral-gray,
+        input[type="radio"]:checked + div .text-champagne-gold { color: #C9B299; }
+        input[type="radio"]:checked + div .text-luxury-black,
+        input[type="radio"]:checked + div span { color: #F8F6F2; }
+    </style>
+</head>
+<body class="antialiased selection:bg-champagne-gold/30 selection:text-luxury-black pb-24">
+
+     <!-- ==================== HEADER ==================== -->
+    <header class="fixed top-0 w-full z-50 pt-safe bg-white/85 backdrop-blur-xl border-b border-muted-beige/60">
+        <div class="max-w-2xl mx-auto h-14 px-4 sm:px-6 flex items-center justify-between">
+            <div class="flex items-center gap-3 min-w-0">
+                <button id="bookingBackBtn" type="button" class="w-9 h-9 rounded-full bg-ivory border border-muted-beige/50 flex items-center justify-center text-warm-brown hover:bg-muted-beige/60 transition-colors shadow-subtle flex-shrink-0">
+                    <span class="material-symbols-outlined text-[18px]">arrow_back_ios_new</span>
+                </button>
+                <div class="flex flex-col min-w-0">
+                    <span id="bookingHeaderTitle" class="font-serif font-bold text-[16px] text-luxury-black leading-none truncate">Selected Services</span>
+                    <span id="bookingHeaderSub" class="text-[10px] font-semibold tracking-wider uppercase text-champagne-gold mt-1 truncate">Step 1 of 2 • Choose Date &amp; Time</span>
+                </div>
+            </div>
+            <a id="headerAddServiceBtn" href="service.html" class="px-3.5 py-1.5 rounded-full bg-ivory border border-muted-beige/60 text-[11px] font-bold uppercase tracking-wider text-warm-brown hover:bg-champagne-gold hover:text-luxury-black transition-colors flex items-center gap-1 no-underline flex-shrink-0 shadow-subtle">
+                <span class="material-symbols-outlined text-[14px]">add</span> Add
+            </a>
+        </div>
+    </header>
+
+    <main id="booking-page" class="w-full max-w-2xl mx-auto pt-16 pb-40 px-4 sm:px-6">
+
+        <!-- ==================== EMPTY BOOKING STATE ==================== -->
+        <section id="emptyBookingState" class="hidden flex-col items-center justify-center text-center py-20">
+            <div class="w-20 h-20 rounded-full bg-ivory flex items-center justify-center text-muted-beige mb-5 border border-muted-beige/40">
+                <span class="material-symbols-outlined text-[36px]">shopping_bag</span>
+            </div>
+            <h2 class="font-serif text-2xl font-bold text-luxury-black mb-2">Your Booking is Empty</h2>
+            <p class="text-[13px] text-neutral-gray mb-6 max-w-[240px]">Select a premium beauty ritual to begin your salon experience.</p>
+            <a href="service.html" class="px-8 py-3.5 rounded-full bg-warm-brown text-white text-[11px] font-bold uppercase tracking-wider hover:bg-luxury-black transition-colors shadow-subtle flex items-center gap-2 no-underline">
+                Explore Services <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+            </a>
+        </section>
+
+        <!-- ==================== CONFIRMATION STATE ==================== -->
+        <section id="bookingConfirmation" class="hidden flex-col items-center text-center py-10">
+            <div class="w-20 h-20 rounded-full bg-sage-green/15 flex items-center justify-center text-sage-green mb-5 border border-sage-green/30">
+                <span class="material-symbols-outlined text-[44px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+            </div>
+            <span class="text-[10px] font-bold text-champagne-gold uppercase tracking-widest mb-1.5">Booking Saved &amp; Slots Locked</span>
+            <h2 class="font-serif text-2xl sm:text-3xl font-bold text-luxury-black mb-2">Redirecting to WhatsApp...</h2>
+            <p class="text-[13px] text-neutral-gray mb-6 max-w-[310px]">Your slots are locked! Send the pre-filled order message on WhatsApp to confirm payment &amp; schedule.</p>
+
+            <div class="w-full bg-white p-5 rounded-[22px] border border-muted-beige/60 shadow-card flex flex-col gap-3.5 mb-6 text-left">
+                <div class="flex justify-between items-center border-b border-muted-beige/40 pb-3">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-neutral-gray">Order ID</span>
+                    <span class="font-serif font-bold text-luxury-black" id="confirm-id">#EE-00000</span>
+                </div>
+                <div class="flex flex-col gap-2 border-b border-muted-beige/40 pb-3">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-neutral-gray">Reserved Schedule</span>
+                    <div class="flex flex-col gap-2 text-[12px] font-semibold text-luxury-black" id="confirm-datetime">—</div>
+                </div>
+                <div class="flex justify-between items-center pt-1">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-neutral-gray">Total Payable</span>
+                    <span class="font-serif font-bold text-xl text-warm-brown" id="confirm-total">₹0</span>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-3 w-full">
+                <a id="confirmWhatsappBtn" href="#" target="_blank" class="w-full h-12 rounded-full bg-green-600 hover:bg-green-700 text-white text-[11px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors shadow-floating no-underline">
+                    <span class="material-symbols-outlined text-[18px]">chat</span>
+                    <span>Send Order on WhatsApp</span>
+                </a>
+                <a href="account.html" class="w-full h-12 rounded-full bg-warm-brown text-white text-[11px] font-bold uppercase tracking-wider flex items-center justify-center transition-colors shadow-subtle hover:bg-luxury-black no-underline">
+                    View My Account
+                </a>
+                <a href="index.html" class="w-full h-12 rounded-full bg-ivory text-warm-brown text-[11px] font-bold uppercase tracking-wider flex items-center justify-center border border-muted-beige/60 hover:bg-white transition-colors no-underline">
+                    Back to Home
+                </a>
+            </div>
+        </section>
+
+        <!-- ==================== BOOKING FLOW (2-STEP CLEAN VIEW) ==================== -->
+        <div id="bookingFlowContainer" class="flex flex-col pt-3">
+
+            <!-- PAGE 1 (STEP 1): ONLY SELECTED SERVICES & SLOT PICKER -->
+            <div id="bookingStep1" class="flex flex-col">
+                <section id="booking-services" class="mb-6">
+                    <!-- JS injects service cards with individual slot bars here -->
+                    <div id="bookingServicesList" class="flex flex-col gap-4"></div>
+                </section>
+            </div>
+
+                    <!-- PAGE 2 (STEP 2): ADDRESS, COUPONS, POINTS & PAYMENT SUMMARY -->
+            <div id="bookingStep2" class="hidden flex-col">
+
+                <!-- Quick Back to Step 1 Strip -->
+                               <div class="mb-5 flex items-center justify-between px-4 py-3 rounded-2xl bg-ivory/60 border border-muted-beige/50">
+                    <span id="step2ServicesSummary" class="text-[13px] font-bold text-luxury-black truncate">Selected Services</span>
+                    <!-- onclick को बदलकर quickEditSlot() कर दिया गया है -->
+                    <button type="button" onclick="window.quickEditSlot()" class="text-[11px] font-extrabold uppercase tracking-wider text-[#9E2A5B] hover:text-warm-brown flex items-center gap-1 flex-shrink-0 bg-white px-2.5 py-1 rounded-md shadow-sm border border-muted-beige/60 transition-colors">
+                        <span class="material-symbols-outlined text-[14px]">edit_calendar</span> Edit Slots
+                    </button>
+                </div>
+
+
+                <!-- SECTION 2: LOCATION & CUSTOMER SUMMARY -->
+                <section id="booking-location" class="mb-7">
+      
+                <div class="flex justify-between items-end mb-3">
+                    <h2 class="font-serif text-[17px] font-bold text-luxury-black">Customer &amp; Venue</h2>
+                    <a href="account.html" class="text-[10px] font-extrabold uppercase tracking-wider text-neutral-gray hover:text-[#9E2A5B] transition-colors no-underline">Edit in Account</a>
+                </div>
+
+                <div class="bg-white rounded-[20px] border border-muted-beige/60 shadow-sm p-4 flex flex-col gap-4">
+                    <!-- Customer Info -->
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="w-10 h-10 rounded-full bg-ivory flex items-center justify-center text-warm-brown flex-shrink-0 border border-muted-beige/40">
+                                <span class="material-symbols-outlined text-[20px]">person</span>
+                            </div>
+                            <div class="flex flex-col min-w-0">
+                                <span id="customerName" class="font-serif text-[15px] font-bold text-luxury-black truncate">Guest Customer</span>
+                                <span id="customerPhone" class="text-[12px] text-neutral-gray font-medium">Add phone in Account</span>
+                            </div>
+                        </div>
+                        <span id="customerDistrictBadge" class="hidden px-2.5 py-1 rounded-full bg-ivory border border-muted-beige/70 text-warm-brown text-[9px] font-extrabold uppercase tracking-wider"></span>
+                    </div>
+
+                    <!-- Dynamic Address Info -->
+                    <div id="venueInfoContainer" class="flex flex-col gap-3 pt-4 border-t border-dashed border-muted-beige/60">
+                        <div id="homeVenueRow" class="flex flex-col gap-4">
+                            <!-- User's Full Address -->
+                            <div class="flex items-start gap-3">
+                                <div class="w-8 h-8 rounded-full bg-ivory flex items-center justify-center text-[#9E2A5B] flex-shrink-0">
+                                    <span class="material-symbols-outlined text-[16px]">home_pin</span>
+                                </div>
+                                <div class="flex flex-col flex-1 min-w-0 mt-0.5">
+                                    <span class="text-[10px] font-bold text-neutral-gray uppercase tracking-wider">Service Address</span>
+                                    <span id="customerAddress" class="text-[13px] font-semibold text-luxury-black leading-snug mt-0.5">Please add your doorstep address in Account</span>
+                                </div>
+                            </div>
+                            <!-- Multiple Saved Addresses Selector -->
+                            <div id="savedAddressSelectorBox" class="hidden pl-11">
+                                <select id="bookingAddressSelect" class="w-full h-10 px-3 rounded-xl border border-muted-beige bg-ivory/40 text-[13px] font-semibold text-luxury-black focus:outline-none focus:border-warm-brown">
+                                </select>
+                            </div>
+
+                            <!-- NEW: Mandatory Service Area Dropdown -->
+                            <div class="pl-11 pr-2">
+                                <label class="text-[10px] font-bold text-neutral-gray uppercase tracking-wider block mb-1.5 flex items-center gap-1">
+                                    Select Service Area <span class="text-muted-rose">*</span>
+                                </label>
+                                <div class="relative">
+                                    <select id="serviceAreaSelect" class="w-full h-12 px-3.5 appearance-none rounded-xl border-2 border-muted-beige/60 bg-warm-white text-[13px] font-bold text-luxury-black focus:outline-none focus:border-[#9E2A5B] transition-colors shadow-sm cursor-pointer">
+                                        <option value="" disabled selected>Choose your delivery area...</option>
+                                        <!-- Areas will be injected here via JS -->
+                                    </select>
+                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-neutral-gray">
+                                        <span class="material-symbols-outlined text-[20px]">expand_more</span>
+                                    </div>
+                                </div>
+                                <p id="areaErrorMsg" class="text-[10px] font-bold text-muted-rose mt-1.5 hidden">Please select your service area to continue.</p>
+                            </div>
+                        </div>
+
+                        <div id="salonVenueRow" class="hidden items-start gap-3">
+                            <div class="w-8 h-8 rounded-full bg-ivory flex items-center justify-center text-warm-brown flex-shrink-0">
+                                <span class="material-symbols-outlined text-[16px]">storefront</span>
+                            </div>
+                            <div class="flex flex-col mt-0.5">
+                                <span class="text-[10px] font-bold text-neutral-gray uppercase tracking-wider">Salon Location</span>
+                                <span class="text-[13px] font-semibold text-luxury-black leading-snug mt-0.5">Elegant Escape Studio, Gandhi Nagar, Jammu</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 3: PROMO CODES & WALLET POINTS -->
+            <section id="booking-promo" class="mb-7 flex flex-col gap-3">
+                <h2 class="font-serif text-[17px] font-bold text-luxury-black">Offers &amp; Points</h2>
+
+                <!-- Promo Input Box -->
+                <div class="w-full bg-white rounded-[16px] border border-muted-beige/60 shadow-sm p-1.5 flex items-center">
+                    <span class="material-symbols-outlined text-[#9E2A5B] ml-3 text-[18px]">local_offer</span>
+                    <input id="promoInput" type="text" placeholder="Enter coupon code" class="flex-grow h-10 px-3 bg-transparent text-[13px] font-bold text-luxury-black placeholder:text-neutral-gray/70 focus:outline-none uppercase">
+                    <button id="applyPromoBtn" type="button" class="px-5 h-10 rounded-xl bg-luxury-black text-white text-[11px] font-bold uppercase tracking-wider hover:bg-warm-brown transition-colors">Apply</button>
+                </div>
+                <p id="promoFeedback" class="text-[11px] font-semibold text-[#2E8B57] -mt-1 ml-2 hidden"></p>
+
+                <!-- Available Coupons Quick Chips -->
+                <div id="availableCouponsStrip" class="flex gap-2 overflow-x-auto no-scrollbar pb-1"></div>
+
+                <!-- Wallet Points Redemption Box -->
+                <div id="walletPointsCard" class="w-full bg-white rounded-[16px] border border-muted-beige/60 shadow-sm p-3.5 flex items-center justify-between gap-3 cursor-pointer" onclick="document.getElementById('usePointsCheckbox').click()">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-9 h-9 rounded-full bg-ivory flex items-center justify-center text-champagne-gold flex-shrink-0">
+                            <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">stars</span>
+                        </div>
+                        <div class="flex flex-col min-w-0">
+                            <span class="text-[13px] font-bold text-luxury-black">Redeem Points</span>
+                            <span id="walletPointsSubtext" class="text-[11px] text-neutral-gray font-medium truncate">Available: 0 Pts</span>
+                        </div>
+                    </div>
+                    <input id="usePointsCheckbox" type="checkbox" class="w-5 h-5 accent-[#9E2A5B] rounded cursor-pointer flex-shrink-0" onclick="event.stopPropagation()" />
+                </div>
+            </section>
+
+            <!-- SECTION 4: FINAL BOOKING SUMMARY -->
+                      <section id="booking-summary" class="mb-8">
+                <h2 class="font-serif text-[17px] font-bold text-luxury-black mb-3">Payment Summary</h2>
+                <div class="bg-white p-5 rounded-[20px] border border-muted-beige/60 shadow-sm flex flex-col gap-3">
+                    <!-- New: Item Total (MRP) -->
+                    <div class="flex justify-between items-center text-[13px]">
+                        <span class="text-neutral-gray font-medium">Item Total</span>
+                        <span class="text-neutral-gray line-through font-medium" id="bookingItemTotal">₹0</span>
+                    </div>
+                    <!-- New: Item Discount -->
+                    <div class="flex justify-between items-center text-[13px] text-[#2E8B57]">
+                        <span class="font-medium">Item Discount</span>
+                        <span class="font-bold" id="bookingItemDiscount">-₹0</span>
+                    </div>
+                    <div class="w-full border-t border-dashed border-muted-beige/40 my-0.5"></div>
+                    <!-- Services Subtotal (Selling Price) -->
+                    <div class="flex justify-between items-center text-[13px]">
+                        <span class="text-luxury-black font-bold">Services Subtotal</span>
+                        <span class="text-luxury-black font-bold" id="bookingSubtotal">₹0</span>
+                    </div>
+                    <div id="discountRow" class="hidden justify-between items-center text-[13px] text-[#2E8B57]">
+        <span class="font-medium" id="discountLabelText">Coupon</span>
+                        <span class="font-bold" id="bookingDiscount">-₹0</span>
+                    </div>
+                    <div id="pointsDiscountRow" class="hidden justify-between items-center text-[13px] text-warm-brown">
+                        <span class="font-medium">Points Redeemed</span>
+                        <span class="font-bold" id="bookingPointsDiscount">-₹0</span>
+                    </div>
+                    <!-- Travel Fee Row (Hidden if 0) -->
+                    <div id="travelFeeRow" class="hidden justify-between items-center text-[13px]">
+                        <span class="text-neutral-gray font-medium">Travel Charge</span>
+                        <span class="font-bold text-luxury-black text-[13px]" id="bookingTravelFee">₹0</span>
+                    </div>
+                    <!-- Convenience Fee Row -->
+                    <div class="flex justify-between items-center text-[13px]">
+                        <span class="text-neutral-gray font-medium">Convenience Fee</span>
+                        <span class="text-[#2E8B57] font-bold uppercase text-[11px] tracking-wider" id="bookingConvenienceFee">Free</span>
+                    </div>
+                    <!-- Hygiene Kit Row -->
+                    <div class="flex justify-between items-center text-[13px]">
+                        <span class="text-neutral-gray font-medium">Hygiene Kit</span>
+                        <span class="text-[#2E8B57] font-bold uppercase text-[11px] tracking-wider" id="bookingHygieneFee">Free</span>
+                    </div>
+                    <div class="w-full border-t border-dashed border-muted-beige/80 my-1.5"></div>
+                    <div class="flex justify-between items-center">
+                        <span class="font-serif font-bold text-[16px] text-luxury-black">Total Payable</span>
+                        <span class="font-serif font-bold text-2xl text-luxury-black leading-none" id="bookingFinalTotal">₹0</span>
+                    </div>
+                </div>
+            </section>
+
+
+                        <!-- SECTION 5: REASSURANCE STRIP -->
+                <section id="booking-reassurance" class="mb-16 flex items-center justify-center gap-4 text-[10px] text-neutral-gray font-bold uppercase tracking-wider">
+                    <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[15px] text-champagne-gold">workspace_premium</span> Verified Artists</span>
+                    <span class="w-1 h-1 rounded-full bg-muted-beige"></span>
+                    <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[15px] text-champagne-gold">clean_hands</span> Sealed Kits</span>
+                    <span class="w-1 h-1 rounded-full bg-muted-beige"></span>
+                    <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[15px] text-champagne-gold">schedule</span> Live Slot Lock</span>
+                </section>
+
+            </div> <!-- End Step 2 -->
+
+        </div> <!-- End Booking Flow -->
+    </main>
+
+    <!-- ==================== OPTION A: BOTTOM SHEET SLOT PICKER MODAL ==================== -->
+    <div id="slotModalScrim" class="fixed inset-0 z-[60] bg-luxury-black/60 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300"></div>
+    <div id="slotPickerModal" class="fixed bottom-0 left-0 right-0 z-[70] bg-warm-white rounded-t-[30px] w-full max-w-2xl mx-auto transform translate-y-full transition-transform duration-300 flex flex-col max-h-[88vh] shadow-2xl border-t border-white">
+        <!-- Drag Handle & Header -->
+        <div class="w-full flex justify-center pt-3 pb-1">
+            <div class="w-12 h-1.5 bg-muted-beige rounded-full"></div>
+        </div>
+        <div class="px-5 py-3 border-b border-muted-beige/50 flex items-center justify-between">
+            <div class="flex flex-col min-w-0 pr-3">
+                <span class="text-[10px] font-bold uppercase tracking-widest text-[#9E2A5B]">Customize Schedule</span>
+                <h3 id="modalServiceTitle" class="font-serif text-[17px] font-bold text-luxury-black truncate">Service Name</h3>
+            </div>
+            <button id="closeSlotModalBtn" type="button" class="w-8 h-8 rounded-full bg-ivory hover:bg-muted-beige/60 flex items-center justify-center text-luxury-black transition-colors flex-shrink-0">
+                <span class="material-symbols-outlined text-[18px]">close</span>
+            </button>
+        </div>
+
+             <!-- Scrollable Modal Body -->
+        <div class="p-5 pt-3 overflow-y-auto no-scrollbar flex-grow flex flex-col gap-6">
+
+            <!-- 1. Service Mode Switch (Home vs Salon - Segmented Toggle) -->
+            <div class="w-full bg-ivory/80 p-1.5 rounded-xl border border-muted-beige/50 flex items-center">
+                <button type="button" id="modeBtnHome" onclick="setModalMode('Home')" class="flex-1 py-2 rounded-lg text-center transition-all font-bold text-[13px] flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">home</span> At Home
+                </button>
+                <button type="button" id="modeBtnSalon" onclick="setModalMode('Salon')" class="flex-1 py-2 rounded-lg text-center transition-all font-bold text-[13px] flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">storefront</span> At Salon
+                </button>
+            </div>
+
+            <!-- 2. Choose Date (7 Days) -->
+            <div>
+                <label class="text-[11px] font-bold uppercase tracking-wider text-neutral-gray block mb-3">Select Date</label>
+                <div id="dateContainer" class="flex gap-2.5 overflow-x-auto no-scrollbar pb-1 -mx-5 px-5 sm:mx-0 sm:px-0"></div>
+            </div>
+
+            <!-- 3. Choose Time Slot -->
+            <div>
+                <div class="flex items-center justify-between mb-4">
+                    <label class="text-[11px] font-bold uppercase tracking-wider text-neutral-gray">Select Time Slot</label>
+                    <div class="flex items-center gap-2 text-[10px] font-bold text-neutral-gray">
+                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-white border border-neutral-gray inline-block"></span> Free</span>
+                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-muted-beige inline-block"></span> Booked</span>
+                    </div>
+                </div>
+                <!-- Anytime (Flexible) Button Container -->
+                <div id="anytimeContainer" class="mb-5"></div>
+                
+                <div id="timeContainer" class="flex flex-col gap-5"></div>
+            </div>
+
+        </div>
+
+
+        <!-- Modal Sticky Footer -->
+        <div class="p-4 bg-white border-t border-muted-beige/50 pb-safe flex items-center justify-between gap-3">
+            <div class="flex flex-col min-w-0">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-neutral-gray">Selected Slot</span>
+                <span id="modalSelectedPreview" class="text-[12px] font-bold text-luxury-black truncate">—</span>
+            </div>
+            <button id="saveSlotBtn" type="button" class="px-7 py-3.5 rounded-xl bg-[#9E2A5B] hover:bg-warm-brown text-white text-[12px] font-bold uppercase tracking-wider transition-colors shadow-floating flex-shrink-0">
+                Save Slot
+            </button>
+        </div>
+    </div>
+
+    <!-- ==================== STICKY BOTTOM CTA (NEXT ON STEP 1 / CONFIRM ON STEP 2) ==================== -->
+    <div id="stickyConfirmContainer" class="fixed bottom-[4rem] pb-safe left-0 right-0 w-full z-40 bg-white/95 backdrop-blur-xl border-t border-muted-beige/50 px-4 py-3 transition-all duration-300 shadow-[0_-8px_24px_rgba(6,5,4,0.05)]">
+        <div class="max-w-2xl mx-auto flex items-center justify-between gap-4">
+            <div class="flex flex-col">
+                <span id="ctaLabelText" class="text-[10px] text-neutral-gray font-bold uppercase tracking-wider">Selected Total</span>
+                <span class="font-serif text-xl font-bold text-luxury-black leading-none mt-0.5" id="ctaFinalTotal">₹0</span>
+            </div>
+
+                     <!-- STEP 1 BUTTON: NEXT -->
+            <button id="nextStepBtn" type="button" class="flex-grow max-w-[240px] sm:max-w-xs h-12 rounded-xl bg-warm-brown hover:bg-luxury-black text-white shadow-floating transition-colors flex items-center justify-center gap-2 group">
+                <span class="text-[12px] font-bold tracking-wider uppercase">Next</span>
+                <span class="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+            </button>
+
+            <!-- STEP 2 BUTTONS: BACK & CONFIRM -->
+            <div id="step2ActionBtns" class="hidden flex-grow justify-end gap-2 max-w-[260px] sm:max-w-xs">
+                <button type="button" onclick="goToBookingStep(1)" class="h-12 w-12 rounded-xl bg-ivory border border-muted-beige/60 text-warm-brown hover:bg-white hover:border-warm-brown transition-colors flex items-center justify-center flex-shrink-0 shadow-sm">
+                    <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+                </button>
+                <button id="confirmBookingBtn" type="button" class="flex-grow h-12 rounded-xl bg-luxury-black hover:bg-warm-brown text-white shadow-floating transition-colors flex items-center justify-center gap-2 group">
+                    <span class="text-[11px] sm:text-[12px] font-bold tracking-wider uppercase">Confirm Booking</span>
+                    <span class="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- ==================== BOTTOM NAVIGATION ==================== -->
+
+    <nav class="fixed bottom-0 w-full z-50 pb-safe bg-white/95 backdrop-blur-md border-t border-muted-beige shadow-[0_-4px_20px_rgba(6,5,4,0.03)]">
+        <div class="max-w-2xl mx-auto grid grid-cols-4 items-center h-16 px-2">
+            <a href="index.html" class="nav-item">
+                <div class="nav-icon-box"><span class="material-symbols-outlined text-[24px]">home</span></div>
+                <span class="nav-label">Home</span>
+            </a>
+            <a href="service.html" class="nav-item">
+                <div class="nav-icon-box"><span class="material-symbols-outlined text-[24px]">spa</span></div>
+                <span class="nav-label">Services</span>
+            </a>
+            <a href="account.html" class="nav-item">
+                <div class="nav-icon-box"><span class="material-symbols-outlined text-[24px]">person</span></div>
+                <span class="nav-label">Account</span>
+            </a>
+            <a href="booking.html" class="nav-item active">
+                <div class="nav-icon-box"><span class="material-symbols-outlined text-[24px]">calendar_month</span></div>
+                <span class="nav-label">Bookings</span>
+            </a>
+        </div>
+    </nav>
+
+       <!-- ==================== JAVASCRIPT ==================== -->
+    <script src="storage.js"></script>
+    <script src="services.js"></script>
+    <script type="module" src="booking.js"></script>
+</body>
+</html>

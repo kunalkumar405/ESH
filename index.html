@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    name="viewport" />
+  <meta content="mobile_tab" name="shell-type" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Elegant Escape" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#060504" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="https://ik.imagekit.io/nsyr92pse/file_000000007260820b9b5c312bcdb076c4.png" />
+  <title>Elegant Escape - Doorstep Luxury Salon</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+    rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "luxury-black": "#060504",
+            "deep-espresso": "#17120D",
+            "warm-brown": "#31261C",
+            "champagne-gold": "#C9B299",
+            "soft-gold": "#D8C3A5",
+            "ivory": "#F3EFE9",
+            "warm-white": "#F8F6F2",
+            "muted-beige": "#DDD5CB",
+            "dusty-rose": "#E7C4C4",
+            "muted-rose": "#A66363",
+            "sage-green": "#8CA58C",
+            "neutral-gray": "#8B8B8B"
+          },
+          fontFamily: {
+            serif: ['"Plus Jakarta Sans"', '"Inter"', 'system-ui', '-apple-system', 'sans-serif'],
+            sans: ['"Inter"', '"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+          },
+          boxShadow: {
+
+            'subtle': '0 2px 10px rgba(6, 5, 4, 0.03)',
+            'card': '0 4px 16px -4px rgba(6, 5, 4, 0.06)',
+            'floating': '0 12px 32px -4px rgba(6, 5, 4, 0.1)'
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    body {
+      background-color: #F8F6F2;
+      color: #060504;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .pt-safe {
+      padding-top: env(safe-area-inset-top, 0px);
+    }
+
+    .pb-safe {
+      padding-bottom: env(safe-area-inset-bottom, 20px);
+    }
+
+    .booking-hidden {
+      transform: translateY(220%) !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+
+      .booking-visible {
+      transform: translateY(0) !important;
+      opacity: 1 !important;
+      pointer-events: auto !important;
+    }
+
+    .booking-visible.nav-hidden-shift {
+      transform: translateY(calc(64px + env(safe-area-inset-bottom, 16px))) !important;
+    }
+
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+
+
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    /* Hero Carousel Configuration */
+    #heroCarousel {
+      touch-action: pan-y pinch-zoom;
+    }
+
+    /* Fix snap-scroll first card clipping */
+    .snap-x {
+      scroll-padding-inline-start: 1rem;
+    }
+
+    @media (min-width: 640px) {
+      .snap-x {
+        scroll-padding-inline-start: 1.5rem;
+      }
+    }
+
+    .carousel-track {
+      display: flex;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .carousel-slide {
+      flex: 0 0 100%;
+      min-width: 100%;
+    }
+
+      /* Bottom Navigation Active States */
+    .nav-item {
+      position: relative;
+      height: 100%;
+      transition: all 0.3s ease;
+    }
+
+    .nav-item.active {
+      color: #31261C;
+    }
+
+    .nav-item.active::before {
+      content: '';
+      position: absolute;
+      top: -1px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 55%;
+      height: 3px;
+      background-color: #31261C;
+      border-radius: 0 0 4px 4px;
+    }
+
+    .nav-item.active .material-symbols-outlined {
+      font-variation-settings: 'FILL' 1;
+    }
+
+    /* PWA Luxury Download Animations */
+    @keyframes pwaGlowPulse {
+      0%, 100% {
+        box-shadow: 0 0 0 0 rgba(201, 178, 153, 0.45), 0 0 16px rgba(201, 178, 153, 0.25);
+      }
+      50% {
+        box-shadow: 0 0 0 8px rgba(201, 178, 153, 0), 0 0 26px rgba(201, 178, 153, 0.6);
+      }
+    }
+
+    @keyframes pwaShimmerSweep {
+      0% {
+        transform: translateX(-150%) skewX(-20deg);
+      }
+      35%, 100% {
+        transform: translateX(250%) skewX(-20deg);
+      }
+    }
+
+    @keyframes pwaCardAmbient {
+      0%, 100% {
+        border-color: rgba(201, 178, 153, 0.35);
+      }
+      50% {
+        border-color: rgba(216, 195, 165, 0.7);
+      }
+    }
+
+    .pwa-logo-glow {
+      animation: pwaGlowPulse 2.6s infinite ease-in-out;
+    }
+
+    .pwa-card-glow {
+      animation: pwaCardAmbient 4s infinite ease-in-out;
+    }
+
+    .pwa-shimmer-btn {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .pwa-shimmer-btn::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 60%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+      animation: pwaShimmerSweep 3s infinite ease-in-out;
+      pointer-events: none;
+    }
+  </style>
+
+
+</head>
+
+<body class="antialiased selection:bg-champagne-gold/30 selection:text-luxury-black">
+
+  <!-- 1. HEADER - BRAND FIRST (Transparent on Top, Solid on Scroll) -->
+  <header id="mainHeader" class="fixed top-0 w-full z-50 pt-safe bg-transparent border-b border-transparent transition-all duration-300">
+    <div class="max-w-2xl mx-auto h-16 px-4 sm:px-6 flex items-center justify-between gap-2.5">
+
+      <!-- Brand Identity & Dynamic Header Search -->
+      <div class="flex items-center gap-2.5 flex-1 min-w-0">
+        <div
+          class="w-11 h-11 sm:w-10 sm:h-10 rounded-full border border-white/40 p-0.5 bg-white flex-shrink-0 shadow-subtle overflow-hidden">
+          <img
+            src="https://ik.imagekit.io/nsyr92pse/file_000000007260820b9b5c312bcdb076c4.png"
+            alt="Elegant Escape Logo" class="w-full h-full object-contain" />
+        </div>
+
+        <!-- Middle Zone: Switches between Brand Text & Search Input -->
+        <div class="relative flex-1 min-w-0 h-10 flex items-center">
+          <!-- Default Brand Text -->
+          <div id="headerBrandText" class="flex flex-col min-w-0 w-full transition-all duration-300 opacity-100 translate-y-0">
+            <span id="brandTitleText" class="font-serif font-bold text-[15px] sm:text-base text-white drop-shadow-sm leading-tight truncate transition-colors duration-300">Elegant
+              Escape</span>
+            <span id="brandSubText" class="text-[9px] font-bold tracking-widest uppercase text-soft-gold drop-shadow-sm truncate transition-colors duration-300">Doorstep Luxury
+              Salon</span>
+          </div>
+
+                   <!-- Compact Search Bar (Shows on Scroll) -->
+          <div id="headerSearchBox" class="absolute inset-0 flex items-center w-full transition-all duration-300 opacity-0 translate-y-2 pointer-events-none">
+            <div onclick="window.location.href='search.html'" class="relative flex items-center w-full h-9 rounded-full bg-white border border-muted-beige/80 shadow-subtle cursor-pointer">
+              <span class="material-symbols-outlined absolute left-3 text-neutral-gray text-[16px] pointer-events-none">search</span>
+              <input type="text" readonly placeholder="Search facials, waxing..."
+                class="w-full h-full pl-8 pr-3 rounded-full bg-transparent text-xs text-luxury-black placeholder:text-neutral-gray cursor-pointer focus:outline-none" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Actions (Wishlist & PWA Download Button) -->
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <a href="account.html?tab=wishlist" aria-label="Wishlist"
+          class="w-10 h-10 rounded-full bg-white/90 backdrop-blur-md border border-white/40 flex items-center justify-center text-warm-brown hover:bg-white transition-colors shadow-subtle no-underline">
+          <span class="material-symbols-outlined text-[20px]">favorite</span>
+        </a>
+        <!-- Header PWA Download Button (Replaces removed notification button, hidden once downloaded) -->
+        <button id="headerPwaInstallBtn" aria-label="Download App" title="Download Elegant Escape App"
+          class="w-10 h-10 rounded-full bg-white/90 backdrop-blur-md border border-champagne-gold/60 flex items-center justify-center text-warm-brown hover:bg-white transition-all shadow-subtle relative group cursor-pointer">
+          <svg class="w-5 h-5 flex-shrink-0 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M17 17H17.01M17.4 14H18C18.9319 14 19.3978 14 19.7654 14.1522C20.2554 14.3552 20.6448 14.7446 20.8478 15.2346C21 15.6022 21 16.0681 21 17C21 17.9319 21 18.3978 20.8478 18.7654C20.6448 19.2554 20.2554 19.6448 19.7654 19.8478C19.3978 20 18.9319 20 18 20H6C5.06812 20 4.60218 20 4.23463 19.8478C3.74458 19.6448 3.35523 19.2554 3.15224 18.7654C3 18.3978 3 17.9319 3 17C3 16.0681 3 15.6022 3.15224 15.2346C3.35523 14.7446 3.74458 14.3552 4.23463 14.1522C4.60218 14 5.06812 14 6 14H6.6M12 15V4M12 15L9 12M12 15L15 12" stroke="#31261C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>
+          <span class="absolute -top-1 -right-1 flex h-3 w-3">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-champagne-gold opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-3 w-3 bg-champagne-gold border-2 border-white"></span>
+          </span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <main class="w-full max-w-2xl mx-auto pb-24 flex flex-col gap-6 -mt-[env(safe-area-inset-top,0px)]">
+
+    <!-- 2 & 3. FULL-BLEED HERO BANNER WITH FLOATING SEARCH (Yes Madam Style) -->
+    <section class="relative w-full overflow-hidden shadow-card bg-deep-espresso isolate">
+
+      <!-- Floating Search Bar Inside Hero -->
+      <div id="mainSearchContainer" class="absolute top-[calc(76px+env(safe-area-inset-top,0px))] left-0 right-0 z-30 px-4 sm:px-6 transition-all duration-300">
+        <div onclick="window.location.href='search.html'"
+          class="relative flex items-center w-full shadow-floating rounded-2xl bg-black/25 backdrop-blur-xl border border-champagne-gold/60 cursor-pointer transition-all group">
+          <span
+            class="material-symbols-outlined absolute left-3.5 text-soft-gold text-[20px] pointer-events-none">search</span>
+          <input type="text" readonly placeholder="Search for 'Korean Glass Skin' or 'Waxing'..."
+            class="w-full h-12 pl-10 pr-12 rounded-2xl bg-transparent text-[13px] font-medium text-white placeholder:text-white/70 cursor-pointer focus:outline-none" />
+          <a href="service.html" aria-label="Filter Options" onclick="event.stopPropagation();"
+            class="absolute right-1.5 w-9 h-9 rounded-xl bg-white/15 backdrop-blur-md text-soft-gold border border-white/20 flex items-center justify-center hover:bg-champagne-gold hover:text-luxury-black transition-colors no-underline">
+            <span class="material-symbols-outlined text-[18px]">tune</span>
+          </a>
+        </div>
+      </div>
+
+
+      <!-- Full-Bleed Carousel (100% Dynamic from Admin Panel Banners) -->
+      <div id="heroCarousel" class="relative w-full h-[calc(370px+env(safe-area-inset-top,0px))] sm:h-[480px]">
+        <div id="carouselTrack" class="carousel-track">
+          <!-- Admin Panel Banners will load here dynamically -->
+          <div class="carousel-slide relative h-full flex items-center justify-center bg-deep-espresso">
+            <span class="w-6 h-6 border-2 border-champagne-gold border-t-transparent rounded-full animate-spin"></span>
+          </div>
+        </div>
+
+        <!-- Subtle Dots -->
+        <div id="carouselDots" class="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5"></div>
+      </div>
+
+
+      <!-- Bottom Offer Strip (Dynamic from Coupons) -->
+      <a href="service.html" class="w-full bg-luxury-black px-4 sm:px-6 py-3 flex items-center justify-between border-t border-white/10 no-underline group">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <span class="font-serif font-bold text-sm text-champagne-gold tracking-wide flex items-center gap-1">
+            <span class="material-symbols-outlined text-[16px]">workspace_premium</span> Privilege
+          </span>
+          <span class="w-1 h-1 rounded-full bg-white/30"></span>
+          <span id="homeTopOfferText" class="text-xs text-white/90 font-medium truncate">Explore our luxury doorstep salon services</span>
+        </div>
+        <span class="material-symbols-outlined text-white/70 text-[18px] group-hover:translate-x-1 transition-transform">chevron_right</span>
+      </a>
+
+    </section>
+
+    <!-- PWA APP DOWNLOAD BANNER (Auto-hides permanently if app is already installed) -->
+    <section id="pwaInstallCardSection" class="w-full px-4 sm:px-6 transition-all duration-300">
+      <div class="relative w-full rounded-3xl bg-gradient-to-br from-deep-espresso via-[#231A12] to-luxury-black p-4 sm:p-5 shadow-floating border border-champagne-gold/40 pwa-card-glow overflow-hidden">
+        
+        <!-- Ambient Background Glow Accents -->
+        <div class="absolute -right-8 -top-8 w-36 h-36 bg-champagne-gold/15 rounded-full blur-2xl pointer-events-none"></div>
+        <div class="absolute -left-6 -bottom-6 w-28 h-28 bg-soft-gold/10 rounded-full blur-xl pointer-events-none"></div>
+
+        <!-- Dismiss Button (Session Close) -->
+        <button id="pwaCardDismissBtn" aria-label="Dismiss banner" class="absolute top-3 right-3 w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white flex items-center justify-center transition-colors z-20 cursor-pointer">
+          <span class="material-symbols-outlined text-[16px]">close</span>
+        </button>
+
+        <div class="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <!-- Left: Logo & Details -->
+          <div class="flex items-center gap-3.5 sm:gap-4 min-w-0 pr-6 sm:pr-0">
+            <!-- Animated Glowing App Icon Container with Header Logo -->
+            <div class="relative flex-shrink-0">
+              <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white p-1 shadow-floating pwa-logo-glow flex items-center justify-center overflow-hidden border border-white/60">
+                <img src="https://ik.imagekit.io/nsyr92pse/file_000000007260820b9b5c312bcdb076c4.png"
+                  alt="Elegant Escape App Logo" class="w-full h-full object-contain" />
+              </div>
+              <span class="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded-full bg-champagne-gold text-luxury-black font-extrabold text-[8px] uppercase tracking-wider shadow-sm flex items-center gap-0.5">
+                <span class="material-symbols-outlined text-[9px]">bolt</span> App
+              </span>
+            </div>
+
+            <!-- Title & Pitch -->
+            <div class="flex flex-col min-w-0">
+              <div class="flex items-center gap-1.5 mb-0.5">
+                <span class="text-[9px] font-bold uppercase tracking-widest text-champagne-gold bg-champagne-gold/15 px-2 py-0.5 rounded-full border border-champagne-gold/30">
+                  ✦ Official App
+                </span>
+                <span class="text-[10px] text-white/70 font-semibold flex items-center gap-0.5">
+                  ★ 4.9 <span class="text-white/40">•</span> Free
+                </span>
+              </div>
+              <h3 class="font-serif font-bold text-white text-[15px] sm:text-[17px] leading-tight truncate">
+                Install Elegant Escape App
+              </h3>
+              <p class="text-white/75 text-[11px] sm:text-xs leading-normal line-clamp-1 sm:line-clamp-2 mt-0.5">
+                Doorstep luxury salon at your fingertips • Fast booking & exclusive deals
+              </p>
+            </div>
+          </div>
+
+          <!-- Right: Animated Download Button -->
+          <div class="flex items-center sm:flex-shrink-0">
+            <button id="pwaCardInstallBtn"
+              class="w-full sm:w-auto pwa-shimmer-btn px-5 py-2.5 rounded-xl bg-gradient-to-r from-soft-gold via-champagne-gold to-soft-gold hover:brightness-105 active:scale-95 text-luxury-black font-bold text-xs sm:text-[13px] shadow-[0_4px_16px_rgba(201,178,153,0.35)] flex items-center justify-center gap-2 cursor-pointer transition-all duration-200">
+              <svg class="w-5 h-5 flex-shrink-0 animate-bounce" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M17 17H17.01M17.4 14H18C18.9319 14 19.3978 14 19.7654 14.1522C20.2554 14.3552 20.6448 14.7446 20.8478 15.2346C21 15.6022 21 16.0681 21 17C21 17.9319 21 18.3978 20.8478 18.7654C20.6448 19.2554 20.2554 19.6448 19.7654 19.8478C19.3978 20 18.9319 20 18 20H6C5.06812 20 4.60218 20 4.23463 19.8478C3.74458 19.6448 3.35523 19.2554 3.15224 18.7654C3 18.3978 3 17.9319 3 17C3 16.0681 3 15.6022 3.15224 15.2346C3.35523 14.7446 3.74458 14.3552 4.23463 14.1522C4.60218 14 5.06812 14 6 14H6.6M12 15V4M12 15L9 12M12 15L15 12" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>
+              <span>Download App</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+      <!-- 4. SERVICE CATEGORIES (100% Dynamic from Admin Panel Categories) -->
+    <section id="homeCategoriesSection" class="w-full px-4 sm:px-6">
+      <div id="homeCategoriesGrid" class="grid grid-cols-4 gap-x-2 gap-y-4 sm:gap-x-4"></div>
+    </section>
+
+     <!-- RECENTLY VIEWED / CHECKED OUT SECTION (LocalStorage Based - Min 3 items) -->
+    <section id="homeRecentlyViewedSection" class="w-full px-4 sm:px-6 hidden">
+      <div class="w-full rounded-[24px] bg-gradient-to-br from-ivory via-warm-white to-ivory border border-muted-beige/70 p-4 sm:p-5 shadow-subtle flex flex-col gap-3">
+        
+        <!-- Header Strip (Personalized Look at this!) -->
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-warm-brown text-[19px]">edit</span>
+            <h3 id="homeRecentlyViewedTitle" class="font-serif text-[16px] font-bold text-luxury-black leading-none">Look at this!</h3>
+          </div>
+          <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-gray">For You</span>
+        </div>
+
+        <!-- 3+ Square Cards Horizontal Slider / Row -->
+        <div id="homeRecentlyViewedGrid" class="flex gap-3 overflow-x-auto hide-scrollbar snap-x pb-1">
+          <!-- Dynamically injected via home.js -->
+        </div>
+
+
+      </div>
+    </section>
+
+    <!-- 5. POPULAR SERVICES (100% Dynamic from Admin Panel Services) -->
+    <section id="homePopularSection" class="w-full hidden">
+      <div class="px-4 sm:px-6 flex items-center justify-between mb-3">
+        <h2 class="font-serif text-[19px] font-bold text-luxury-black">Popular Services</h2>
+        <a href="service.html"
+          class="text-[11px] font-bold text-warm-brown uppercase tracking-wider no-underline hover:text-champagne-gold transition-colors">See
+          All</a>
+      </div>
+      <div id="homePopularGrid" class="flex gap-4 overflow-x-auto hide-scrollbar snap-x px-4 sm:px-6 pb-2"></div>
+    </section>
+
+
+        <!-- PROMO BANNER SECTION 1 (Adaptive Shape) -->
+    <section id="promoSection1" class="w-full px-4 sm:px-6 hidden">
+      <div id="promoBox1" class="w-full rounded-2xl overflow-hidden shadow-card border border-muted-beige/60 bg-ivory cursor-pointer active:scale-[0.99] transition-transform"></div>
+    </section>
+
+    <!-- NEW: RANDOM FEATURED SPOTLIGHT SERVICE CARD (Matches Screenshot) -->
+    <section id="homeSpotlightSection" class="w-full px-4 sm:px-6 hidden">
+      <div class="flex items-center justify-between mb-2.5">
+        <div class="flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-warm-brown text-[18px]">verified</span>
+          <span class="font-serif text-[16px] font-bold text-luxury-black">Featured Spotlight</span>
+        </div>
+        <span class="text-[9px] font-bold uppercase tracking-widest text-champagne-gold">Handpicked for you</span>
+      </div>
+      <div id="homeSpotlightCard" class="w-full bg-white rounded-[24px] border border-muted-beige/70 p-3.5 shadow-card flex flex-col justify-between group transition-all"></div>
+    </section>
+
+    <!-- 6. TRENDING SERVICES (100% Dynamic from Admin Panel Services) -->
+    <section id="homeTrendingSection" class="w-full bg-ivory/40 py-6 border-y border-muted-beige/30 hidden">
+      <div class="px-4 sm:px-6 flex items-center justify-between mb-4">
+        <h2 class="font-serif text-[19px] font-bold text-luxury-black">Trending Services</h2>
+        <a href="service.html"
+          class="text-[11px] font-bold text-warm-brown uppercase tracking-wider no-underline hover:text-champagne-gold transition-colors">See
+          All</a>
+      </div>
+      <div id="homeTrendingGrid" class="flex gap-3 overflow-x-auto hide-scrollbar snap-x px-4 sm:px-6 pb-2"></div>
+    </section>
+
+    <!-- PROMO BANNER SECTION 2 (Adaptive Shape) -->
+    <section id="promoSection2" class="w-full px-4 sm:px-6 hidden">
+      <div id="promoBox2" class="w-full rounded-2xl overflow-hidden shadow-card border border-muted-beige/60 bg-ivory cursor-pointer active:scale-[0.99] transition-transform"></div>
+    </section>
+
+    <!-- 7. PROMO COUPON BANNER (100% Dynamic from Admin Panel Coupons) -->
+    <section id="homeCouponSection" class="w-full px-4 sm:px-6 hidden">
+      <div id="homeCouponBox"
+        class="w-full rounded-[20px] bg-gradient-to-r from-deep-espresso to-luxury-black p-5 flex items-center justify-between shadow-floating border border-luxury-black relative overflow-hidden">
+      </div>
+    </section>
+
+    <!-- 8. OUR SIGNATURE WORK / BEAUTY PORTFOLIO (100% Dynamic from Admin Panel Signature Work) -->
+    <section id="homeSignatureSection" class="w-full px-4 sm:px-6 pt-2 hidden">
+      <div class="flex flex-col mb-4">
+        <span
+          class="text-[10px] font-bold text-champagne-gold uppercase tracking-widest flex items-center gap-1.5 mb-1">
+          <span class="material-symbols-outlined text-[14px]">auto_awesome</span> Beauty, Crafted At Home
+        </span>
+        <h2 class="font-serif text-[22px] font-bold text-luxury-black leading-tight">Our Signature Work</h2>
+      </div>
+      <div id="homeSignatureGrid" class="grid grid-cols-2 gap-2 sm:gap-3"></div>
+    </section>
+
+ 
+
+    <!-- PROMO BANNER SECTION 3 (Adaptive Shape) -->
+    <section id="promoSection3" class="w-full px-4 sm:px-6 hidden">
+      <div id="promoBox3" class="w-full rounded-2xl overflow-hidden shadow-card border border-muted-beige/60 bg-ivory cursor-pointer active:scale-[0.99] transition-transform"></div>
+    </section>
+
+
+      <!-- 9. REVIEWS / LOVED BY JAMMU (100% Dynamic from Admin Panel) -->
+    <section id="homeReviewsSection" class="w-full px-4 sm:px-6 pt-2">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-serif text-[22px] font-bold text-luxury-black">Loved by Jammu</h2>
+      </div>
+
+      <!-- Dynamic Rating Summary Box -->
+      <div class="flex items-center gap-4 mb-5 p-5 rounded-[20px] bg-white border border-muted-beige/60 shadow-subtle">
+        <div
+          class="w-16 h-16 rounded-full bg-gradient-to-br from-deep-espresso to-luxury-black flex items-center justify-center shadow-inner flex-shrink-0 border-2 border-champagne-gold/30">
+          <span id="homeAvgRatingScore" class="font-serif text-2xl font-bold text-champagne-gold">4.9</span>
+        </div>
+        <div class="flex flex-col">
+          <div class="flex text-champagne-gold text-[16px] mb-1">
+            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+          </div>
+          <span id="homeRatingHeadline" class="text-sm sm:text-base font-bold text-luxury-black leading-tight">Excellent Beauty Service</span>
+          <span id="homeRatingSubtext" class="text-[10px] sm:text-[11px] text-neutral-gray mt-1 font-medium">Based on genuine client salon ratings</span>
+        </div>
+      </div>
+
+      <!-- Dynamic Scrollable Review Cards -->
+      <div id="homeReviewsGrid" class="flex gap-4 overflow-x-auto hide-scrollbar snap-x pb-4"></div>
+    </section>
+
+
+  
+
+    <!-- 10. WHY ELEGANT ESCAPE -->
+
+    <section class="w-full px-4 sm:px-6">
+      <h2 class="font-serif text-[19px] font-bold text-luxury-black mb-4 text-center">The Premium Difference</h2>
+
+      <div class="grid grid-cols-2 gap-3 sm:gap-4">
+        <!-- Feature 1 -->
+        <div
+          class="p-4 sm:p-5 bg-white rounded-[20px] border border-muted-beige/60 shadow-subtle flex flex-col gap-2.5 transition-colors hover:border-champagne-gold group">
+          <div
+            class="w-10 h-10 rounded-full bg-ivory text-warm-brown flex items-center justify-center group-hover:bg-champagne-gold group-hover:text-luxury-black transition-colors border border-muted-beige/40">
+            <span class="material-symbols-outlined text-[20px]">home</span>
+          </div>
+          <div class="flex flex-col">
+            <h4 class="text-[12px] sm:text-[13px] font-bold text-luxury-black leading-tight">At-Home Comfort</h4>
+            <p class="text-[10px] text-neutral-gray mt-1 leading-relaxed">The complete luxury salon experience arrives
+              directly at your doorstep.</p>
+          </div>
+        </div>
+
+        <!-- Feature 2 -->
+        <div
+          class="p-4 sm:p-5 bg-white rounded-[20px] border border-muted-beige/60 shadow-subtle flex flex-col gap-2.5 transition-colors hover:border-champagne-gold group">
+          <div
+            class="w-10 h-10 rounded-full bg-ivory text-warm-brown flex items-center justify-center group-hover:bg-champagne-gold group-hover:text-luxury-black transition-colors border border-muted-beige/40">
+            <span class="material-symbols-outlined text-[20px]">verified</span>
+          </div>
+          <div class="flex flex-col">
+            <h4 class="text-[12px] sm:text-[13px] font-bold text-luxury-black leading-tight">Expert Artists</h4>
+            <p class="text-[10px] text-neutral-gray mt-1 leading-relaxed">Highly trained, background-verified female
+              beauty professionals.</p>
+          </div>
+        </div>
+
+        <!-- Feature 3 -->
+        <div
+          class="p-4 sm:p-5 bg-white rounded-[20px] border border-muted-beige/60 shadow-subtle flex flex-col gap-2.5 transition-colors hover:border-champagne-gold group">
+          <div
+            class="w-10 h-10 rounded-full bg-ivory text-warm-brown flex items-center justify-center group-hover:bg-champagne-gold group-hover:text-luxury-black transition-colors border border-muted-beige/40">
+            <span class="material-symbols-outlined text-[20px]">clean_hands</span>
+          </div>
+          <div class="flex flex-col">
+            <h4 class="text-[12px] sm:text-[13px] font-bold text-luxury-black leading-tight">100% Hygienic</h4>
+            <p class="text-[10px] text-neutral-gray mt-1 leading-relaxed">Single-use sealed kits and fully sanitized
+              beauty tools for every session.</p>
+          </div>
+        </div>
+
+        <!-- Feature 4 -->
+        <div
+          class="p-4 sm:p-5 bg-white rounded-[20px] border border-muted-beige/60 shadow-subtle flex flex-col gap-2.5 transition-colors hover:border-champagne-gold group">
+          <div
+            class="w-10 h-10 rounded-full bg-ivory text-warm-brown flex items-center justify-center group-hover:bg-champagne-gold group-hover:text-luxury-black transition-colors border border-muted-beige/40">
+            <span class="material-symbols-outlined text-[20px]">self_improvement</span>
+          </div>
+          <div class="flex flex-col">
+            <h4 class="text-[12px] sm:text-[13px] font-bold text-luxury-black leading-tight">Personalized Care</h4>
+            <p class="text-[10px] text-neutral-gray mt-1 leading-relaxed">Treatments uniquely tailored to your
+              individual skin and hair needs.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 11. SAFETY / HYGIENE -->
+    <section class="w-full px-4 sm:px-6">
+      <div class="p-6 rounded-[24px] bg-deep-espresso text-warm-white flex flex-col gap-5 shadow-floating">
+        <h3
+          class="font-serif text-base font-bold text-champagne-gold tracking-wide uppercase text-center border-b border-white/10 pb-3">
+          Your Safety, Our Standard</h3>
+        <div class="flex flex-col gap-4">
+          <div class="flex items-start gap-3">
+            <span class="material-symbols-outlined text-soft-gold text-[20px]">check_circle</span>
+            <div class="flex flex-col mt-0.5">
+              <span class="text-xs font-bold text-white leading-tight">Monodose Single-Use Kits</span>
+              <span class="text-[11px] text-white/70 mt-0.5">Sealed packages opened directly before you</span>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="material-symbols-outlined text-soft-gold text-[20px]">check_circle</span>
+            <div class="flex flex-col mt-0.5">
+              <span class="text-xs font-bold text-white leading-tight">Verified Professionals</span>
+              <span class="text-[11px] text-white/70 mt-0.5">Experienced certified female artists</span>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="material-symbols-outlined text-soft-gold text-[20px]">check_circle</span>
+            <div class="flex flex-col mt-0.5">
+              <span class="text-xs font-bold text-white leading-tight">100% Sanitized Tools</span>
+              <span class="text-[11px] text-white/70 mt-0.5">Autoclaved instruments &amp; strict cleanliness
+                protocols</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+       <!-- 12. SERVICE AREAS -->
+    <section class="w-full px-4 sm:px-6">
+      <div
+        class="flex flex-col items-center justify-center text-center p-6 rounded-[20px] bg-ivory/50 border border-muted-beige/40">
+        <span class="material-symbols-outlined text-champagne-gold text-[28px] mb-2">map</span>
+        <h3 class="text-[11px] font-bold uppercase tracking-widest text-warm-brown mb-4">Serving Doorstep Beauty In</h3>
+        <div class="flex flex-wrap items-center justify-center gap-2.5">
+          <span
+            class="px-3 py-1.5 rounded-full border border-muted-beige/60 bg-white text-[10px] font-bold text-luxury-black shadow-subtle">Channi</span>
+          <span
+            class="px-3 py-1.5 rounded-full border border-muted-beige/60 bg-white text-[10px] font-bold text-luxury-black shadow-subtle">Sainik Colony</span>
+          <span
+            class="px-3 py-1.5 rounded-full border border-muted-beige/60 bg-white text-[10px] font-bold text-luxury-black shadow-subtle">Bari brahman</span>
+          <span
+            class="px-3 py-1.5 rounded-full border border-muted-beige/60 bg-white text-[10px] font-bold text-luxury-black shadow-subtle">Bishna</span>
+          <span
+            class="px-3 py-1.5 rounded-full border border-muted-beige/60 bg-white text-[10px] font-bold text-luxury-black shadow-subtle">Talab Tillo</span>
+          <span
+            class="px-3 py-1.5 rounded-full border border-muted-beige/60 bg-white text-[10px] font-bold text-luxury-black shadow-subtle">Paloura</span>
+          <span
+            class="px-3 py-1.5 rounded-full border border-muted-beige/60 bg-white text-[10px] font-bold text-luxury-black shadow-subtle">Roop Nagar</span>
+          <span
+            class="px-3 py-1.5 rounded-full border border-muted-beige/60 bg-white text-[10px] font-bold text-luxury-black shadow-subtle">Bantlab</span>
+          <span
+            class="px-3 py-1.5 rounded-full border border-muted-beige/60 bg-white text-[10px] font-bold text-luxury-black shadow-subtle">Janipur</span>
+          <span
+            class="px-3 py-1.5 rounded-full border border-muted-beige/60 bg-white text-[10px] font-bold text-luxury-black shadow-subtle">Newplot</span>
+          <span
+            class="px-3 py-1.5 rounded-full border border-muted-beige/60 bg-white text-[10px] font-bold text-luxury-black shadow-subtle">Lakadmandi</span>
+          <span
+            class="px-3 py-1.5 rounded-full border border-muted-beige/60 bg-white text-[10px] font-bold text-luxury-black shadow-subtle">Sarwal</span>
+        </div>
+      </div>
+    </section>
+
+
+        <!-- 13. FINAL BOOKING CTA -->
+    <section class="w-full px-4 sm:px-6 pt-4 pb-2 text-center flex flex-col items-center">
+      <div class="w-12 h-1 bg-champagne-gold/40 rounded-full mb-5"></div>
+      <h2
+        class="font-serif text-2xl sm:text-3xl font-bold text-luxury-black mb-3 leading-tight max-w-[280px] sm:max-w-sm">
+        Your beauty ritual is just a booking away.
+      </h2>
+      <p class="text-xs text-neutral-gray mb-6">Experience the luxury of a premium salon, without leaving your home.</p>
+      <a href="service.html"
+        class="inline-flex items-center justify-center px-8 py-3.5 rounded-full bg-warm-brown text-white font-bold uppercase tracking-widest text-[11px] hover:bg-luxury-black hover:shadow-floating transition-all no-underline w-full sm:w-auto">
+        Book Your Session
+      </a>
+    </section>
+
+    <!-- 14. FOOTER (Dynamic Social Links & Timings from Admin Settings) -->
+    <footer class="w-full px-4 sm:px-6 pb-6 pt-4 border-t border-muted-beige/40">
+      <div class="flex flex-col items-center justify-center text-center gap-3">
+        <h4 class="font-serif font-bold text-lg text-luxury-black">Elegant Escape</h4>
+        <p class="text-[11px] text-neutral-gray font-medium uppercase tracking-widest">Beauty Comes Home • Jammu</p>
+        
+        <!-- Operating Hours Display (Dynamic from Admin Settings) -->
+        <div id="footerOperatingHours" class="text-[11px] font-semibold text-warm-brown/80 hidden"></div>
+
+        <!-- Social & Contact Links Container (Dynamic from Admin Settings) -->
+        <div id="footerDynamicLinks" class="flex flex-wrap items-center justify-center gap-4 mt-2">
+          <a href="tel:7780910928"
+            class="text-xs font-bold text-warm-brown hover:text-champagne-gold transition-colors no-underline">Call Us</a>
+          <span class="w-1 h-1 rounded-full bg-muted-beige"></span>
+          <a href="https://wa.me/917780910928" target="_blank" rel="noopener noreferrer"
+            class="text-xs font-bold text-warm-brown hover:text-champagne-gold transition-colors no-underline">WhatsApp</a>
+          <span class="w-1 h-1 rounded-full bg-muted-beige"></span>
+          <a href="service.html"
+            class="text-xs font-bold text-warm-brown hover:text-champagne-gold transition-colors no-underline">Instagram</a>
+        </div>
+
+        <p class="text-[10px] text-neutral-gray mt-4">© 2026 Elegant Escape. All rights reserved.</p>
+      </div>
+    </footer>
+
+
+  </main>
+
+   <!-- SLEEK GREEN FLOATING CART BAR (Same as Service Page) -->
+  <div id="homeBookingBar" style="bottom: calc(4.6rem + env(safe-area-inset-bottom, 16px));" class="fixed left-0 right-0 w-full z-[48] px-4 booking-hidden transition-all duration-300">
+    <div onclick="window.location.href='booking.html'" class="max-w-2xl mx-auto bg-[#198728] hover:bg-[#146c20] text-white rounded-2xl py-2 px-3 pr-4 shadow-[0_8px_24px_rgba(25,135,40,0.4)] flex items-center justify-between cursor-pointer transition-all">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <div class="w-9 h-9 rounded-full bg-white p-0.5 flex-shrink-0 overflow-hidden shadow-sm">
+          <img id="homeCartBarImg" src="https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&q=80&w=200" alt="Cart" class="w-full h-full rounded-full object-cover" />
+        </div>
+        <div class="flex flex-col min-w-0">
+          <span id="homeCartBarCategory" class="font-bold text-[13px] text-white leading-tight truncate">Salon For Women</span>
+          <span class="text-[11px] text-white/90 font-medium leading-tight mt-0.5"><span id="homeCartCount">0</span> <span id="homeCartServiceWord">service</span> added • ₹<span id="homeCartTotal">0</span></span>
+        </div>
+      </div>
+      <div class="flex items-center gap-0.5 font-bold text-[13px] text-white flex-shrink-0 pl-2">
+        <span>View Cart</span>
+        <span class="material-symbols-outlined text-[17px]">chevron_right</span>
+      </div>
+    </div>
+  </div>
+
+   <!-- 15. BOTTOM NAVIGATION -->
+  <nav id="bottomNav"
+    class="fixed bottom-0 w-full z-50 pb-safe bg-white/95 backdrop-blur-xl border-t border-muted-beige/40 shadow-[0_-4px_24px_rgba(6,5,4,0.04)] transition-transform duration-300 ease-in-out">
+    <div class="max-w-2xl mx-auto grid grid-cols-4 items-center h-16 px-2">
+
+      <!-- Home (Active) -->
+      <a href="index.html"
+        class="nav-item active flex flex-col items-center justify-center gap-1 text-warm-brown no-underline">
+        <div class="flex items-center justify-center transition-transform hover:-translate-y-0.5">
+          <span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">home</span>
+        </div>
+        <span class="text-[10px] font-bold uppercase tracking-wider">Home</span>
+      </a>
+
+      <!-- Services -->
+      <a href="service.html"
+        class="nav-item flex flex-col items-center justify-center gap-1 text-neutral-gray hover:text-warm-brown transition-colors no-underline">
+        <div class="flex items-center justify-center transition-transform hover:-translate-y-0.5">
+          <span class="material-symbols-outlined text-[24px]">spa</span>
+        </div>
+        <span class="text-[10px] font-bold uppercase tracking-wider">Services</span>
+      </a>
+
+      <!-- Account -->
+      <a href="account.html"
+        class="nav-item flex flex-col items-center justify-center gap-1 text-neutral-gray hover:text-warm-brown transition-colors no-underline">
+        <div class="flex items-center justify-center transition-transform hover:-translate-y-0.5">
+          <span class="material-symbols-outlined text-[24px]">person</span>
+        </div>
+        <span class="text-[10px] font-bold uppercase tracking-wider">Account</span>
+      </a>
+
+      <!-- Bookings -->
+      <a href="booking.html"
+        class="nav-item flex flex-col items-center justify-center gap-1 text-neutral-gray hover:text-warm-brown transition-colors no-underline">
+        <div class="flex items-center justify-center transition-transform hover:-translate-y-0.5">
+          <span class="material-symbols-outlined text-[24px]">calendar_month</span>
+        </div>
+        <span class="text-[10px] font-bold uppercase tracking-wider">Bookings</span>
+      </a>
+
+    </div>
+  </nav>
+
+  <!-- iOS Safari Install Instructions Sheet Modal -->
+  <div id="pwaIosModal" class="fixed inset-0 z-[100] hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div id="pwaIosModalBackdrop" class="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"></div>
+    <div class="relative w-full max-w-md bg-warm-white rounded-t-[28px] sm:rounded-[28px] p-5 sm:p-6 shadow-floating z-10 border border-muted-beige/80 animate-in fade-in slide-in-from-bottom-6 duration-300">
+      
+      <div class="w-10 h-1 rounded-full bg-neutral-gray/30 mx-auto mb-4 sm:hidden"></div>
+      
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-white p-1 border border-muted-beige shadow-subtle overflow-hidden">
+            <img src="https://ik.imagekit.io/nsyr92pse/file_000000007260820b9b5c312bcdb076c4.png" alt="Elegant Escape" class="w-full h-full object-contain" />
+          </div>
+          <div>
+            <h4 class="font-serif font-bold text-luxury-black text-base">Install on iPhone / iPad</h4>
+            <p class="text-[11px] text-neutral-gray">Follow these 2 simple steps:</p>
+          </div>
+        </div>
+        <button id="closeIosModalBtn" aria-label="Close install instructions" class="w-8 h-8 rounded-full bg-muted-beige/40 flex items-center justify-center text-luxury-black hover:bg-muted-beige transition-colors">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+      </div>
+
+      <div class="space-y-3 my-4">
+        <div class="flex items-start gap-3 p-3 rounded-2xl bg-white border border-muted-beige/60 shadow-subtle">
+          <div class="w-8 h-8 rounded-full bg-champagne-gold/20 flex items-center justify-center text-warm-brown flex-shrink-0">
+            <span class="material-symbols-outlined text-[18px]">ios_share</span>
+          </div>
+          <div class="text-xs text-luxury-black">
+            <span class="font-bold">Step 1:</span> Tap the <span class="font-semibold text-warm-brown">Share</span> button in Safari's bottom toolbar.
+          </div>
+        </div>
+
+        <div class="flex items-start gap-3 p-3 rounded-2xl bg-white border border-muted-beige/60 shadow-subtle">
+          <div class="w-8 h-8 rounded-full bg-champagne-gold/20 flex items-center justify-center text-warm-brown flex-shrink-0">
+            <span class="material-symbols-outlined text-[18px]">add_box</span>
+          </div>
+          <div class="text-xs text-luxury-black">
+            <span class="font-bold">Step 2:</span> Scroll down and tap <span class="font-semibold text-warm-brown">"Add to Home Screen"</span>, then tap <strong>Add</strong>.
+          </div>
+        </div>
+      </div>
+
+      <button onclick="document.getElementById('pwaIosModal').classList.add('hidden')" class="w-full py-3 rounded-xl bg-luxury-black text-champagne-gold font-bold text-xs uppercase tracking-wider hover:bg-deep-espresso transition-colors">
+        Got it!
+      </button>
+    </div>
+  </div>
+
+  <!-- Browser Menu Guide Modal (For desktop / manual install) -->
+  <div id="pwaBrowserModal" class="fixed inset-0 z-[100] hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div id="pwaBrowserModalBackdrop" class="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"></div>
+    <div class="relative w-full max-w-md bg-warm-white rounded-t-[28px] sm:rounded-[28px] p-5 sm:p-6 shadow-floating z-10 border border-muted-beige/80 animate-in fade-in slide-in-from-bottom-6 duration-300">
+      
+      <div class="w-10 h-1 rounded-full bg-neutral-gray/30 mx-auto mb-4 sm:hidden"></div>
+      
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-white p-1 border border-muted-beige shadow-subtle overflow-hidden">
+            <img src="https://ik.imagekit.io/nsyr92pse/file_000000007260820b9b5c312bcdb076c4.png" alt="Elegant Escape" class="w-full h-full object-contain" />
+          </div>
+          <div>
+            <h4 class="font-serif font-bold text-luxury-black text-base">Install Elegant Escape</h4>
+            <p class="text-[11px] text-neutral-gray">Directly from your browser</p>
+          </div>
+        </div>
+        <button id="closeBrowserModalBtn" aria-label="Close install guide" class="w-8 h-8 rounded-full bg-muted-beige/40 flex items-center justify-center text-luxury-black hover:bg-muted-beige transition-colors">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+      </div>
+
+      <p class="text-xs text-luxury-black mb-4 leading-relaxed">
+        Click the <strong>Install</strong> icon in your browser's address bar (top right) or open your browser menu <strong>(⋮)</strong> and select <strong>"Install Elegant Escape"</strong>.
+      </p>
+
+      <button onclick="document.getElementById('pwaBrowserModal').classList.add('hidden')" class="w-full py-3 rounded-xl bg-luxury-black text-champagne-gold font-bold text-xs uppercase tracking-wider hover:bg-deep-espresso transition-colors">
+        Okay
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== JAVASCRIPT ==================== -->
+  <script src="storage.js"></script>
+  <script src="home.js"></script>
+  <script src="pwa.js"></script>
+
+</body>
+
+</html>

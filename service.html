@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport" />
+  <title>Service Catalogue - Elegant Escape</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "luxury-black": "#060504",
+            "deep-espresso": "#17120D",
+            "warm-brown": "#31261C",
+            "champagne-gold": "#C9B299",
+            "soft-gold": "#D8C3A5",
+            "ivory": "#F3EFE9",
+            "warm-white": "#F8F6F2",
+            "muted-beige": "#DDD5CB",
+            "dusty-rose": "#E7C4C4",
+            "muted-rose": "#A66363",
+            "sage-green": "#8CA58C",
+            "neutral-gray": "#8B8B8B"
+          },
+          fontFamily: {
+            serif: ['"Plus Jakarta Sans"', '"Inter"', 'system-ui', '-apple-system', 'sans-serif'],
+            sans: ['"Inter"', '"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+          },
+          boxShadow: {
+
+            'subtle': '0 2px 10px rgba(6, 5, 4, 0.03)',
+            'card': '0 4px 16px -4px rgba(6, 5, 4, 0.06)',
+            'floating': '0 12px 32px -4px rgba(6, 5, 4, 0.1)'
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body { background-color: #F8F6F2; color: #060504; -webkit-tap-highlight-color: transparent; }
+    .pt-safe { padding-top: env(safe-area-inset-top, 0px); }
+    .pb-safe { padding-bottom: env(safe-area-inset-bottom, 20px); }
+      .booking-hidden { 
+      transform: translateY(220%) !important; 
+      opacity: 0 !important; 
+      pointer-events: none !important; 
+    }
+    .booking-visible { 
+      transform: translateY(0) !important; 
+      opacity: 1 !important; 
+      pointer-events: auto !important; 
+    }
+    .booking-visible.nav-hidden-shift { 
+      transform: translateY(64px) !important; 
+    }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    /* Snap scroll first card fix */
+    .snap-x { scroll-padding-inline-start: 1rem; }
+    @media (min-width: 640px) { .snap-x { scroll-padding-inline-start: 1.5rem; } }
+    /* Cart added state */
+    .btn-added { background-color: #31261C; color: #F8F6F2; border-color: #31261C; }
+    /* Nav */
+    .nav-item { position: relative; height: 100%; transition: all 0.3s ease; }
+    .nav-item.active { color: #31261C; }
+    .nav-item.active::before {
+      content: ''; position: absolute; top: -1px; left: 50%; transform: translateX(-50%); width: 55%; height: 3px; background-color: #31261C; border-radius: 0 0 4px 4px;
+    }
+    .nav-item.active .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
+  </style>
+
+
+</head>
+<body class="antialiased selection:bg-champagne-gold/30 selection:text-luxury-black">
+
+   <!-- GLASS PRISM HEADER WITH SEARCH & SHORT FILTERS -->
+  <header class="fixed top-0 w-full z-50 pt-safe bg-white/75 backdrop-blur-2xl border-b border-white/60 shadow-[0_4px_24px_rgba(6,5,4,0.05)]">
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 pt-2.5 pb-2.5 flex flex-col gap-2.5">
+      <!-- Top Row: Back Button + Search Bar -->
+      <div class="flex items-center gap-2.5">
+        <button onclick="window.history.back()" class="w-10 h-10 rounded-full bg-white/90 border border-muted-beige/60 flex items-center justify-center text-warm-brown hover:bg-ivory transition-colors shadow-subtle flex-shrink-0">
+          <span class="material-symbols-outlined text-[18px]">arrow_back_ios_new</span>
+        </button>
+        <div onclick="window.location.href='search.html'" class="relative flex-grow cursor-pointer">
+          <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-gray text-[19px] pointer-events-none">search</span>
+          <input readonly placeholder="Search facials, waxing, packages..." class="w-full h-10 bg-white/90 border border-muted-beige/70 rounded-full pl-10 pr-9 text-[13px] font-medium text-luxury-black placeholder:text-neutral-gray cursor-pointer focus:outline-none shadow-subtle transition-all" />
+        </div>
+      </div>
+
+      <!-- Bottom Row: Short Filter Chips -->
+      <div id="categoryContainer" class="flex gap-2 overflow-x-auto no-scrollbar pt-0.5 -mx-4 px-4 sm:mx-0 sm:px-0 snap-x">
+      </div>
+    </div>
+  </header>
+
+  <main class="w-full max-w-2xl mx-auto pt-[118px] pb-28 px-4 sm:px-6 flex flex-col gap-6 min-h-screen">
+    <!-- Catalogue Container -->
+    <div id="catalogueContainer" class="w-full flex flex-col gap-6"></div>
+
+    <!-- Empty State -->
+    <div id="emptyState" class="hidden flex-col items-center justify-center py-16 text-center">
+      <span class="material-symbols-outlined text-[48px] text-muted-beige mb-4">search_off</span>
+      <h3 class="font-serif text-xl font-bold text-luxury-black">No services found</h3>
+      <p class="text-sm text-neutral-gray mt-2">Try adjusting your search or category.</p>
+    </div>
+  </main>
+
+        <!-- SLEEK GREEN FLOATING CART BAR (Positioned Cleanly Above Bottom Nav) -->
+  <div id="bookingBar" style="bottom: calc(4.6rem + env(safe-area-inset-bottom, 16px));" class="fixed left-0 right-0 w-full z-[45] px-4 booking-hidden transition-all duration-300 transform translate-y-full pointer-events-none">
+    <div onclick="window.location.href='booking.html'" class="max-w-2xl mx-auto bg-[#198728] hover:bg-[#146c20] text-white rounded-2xl py-2 px-3 pr-4 shadow-[0_8px_24px_rgba(25,135,40,0.4)] flex items-center justify-between cursor-pointer pointer-events-auto transition-all">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <div class="w-9 h-9 rounded-full bg-white p-0.5 flex-shrink-0 overflow-hidden shadow-sm">
+          <img id="cartBarImg" src="https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&q=80&w=200" alt="Cart" class="w-full h-full rounded-full object-cover" />
+        </div>
+        <div class="flex flex-col min-w-0">
+          <span id="cartBarCategory" class="font-bold text-[13px] text-white leading-tight truncate">Salon For Women</span>
+          <span class="text-[11px] text-white/90 font-medium leading-tight mt-0.5"><span id="cartCount">0</span> <span id="cartServiceWord">service</span> added • ₹<span id="cartTotal">0</span></span>
+        </div>
+      </div>
+      <div class="flex items-center gap-0.5 font-bold text-[13px] text-white flex-shrink-0 pl-2">
+        <span>View Cart</span>
+        <span class="material-symbols-outlined text-[17px]">chevron_right</span>
+      </div>
+    </div>
+  </div>
+
+  <nav id="bottomNav" class="fixed bottom-0 w-full z-50 pb-safe bg-white/95 backdrop-blur-xl border-t border-muted-beige/40 shadow-[0_-4px_24px_rgba(6,5,4,0.04)] transition-transform duration-300 ease-in-out">
+    <div class="max-w-2xl mx-auto grid grid-cols-4 items-center h-16 px-2">
+      <a href="index.html" class="nav-item flex flex-col items-center justify-center gap-1 text-neutral-gray hover:text-warm-brown transition-colors no-underline">
+        <div class="flex items-center justify-center transition-transform hover:-translate-y-0.5">
+          <span class="material-symbols-outlined text-[24px]">home</span>
+        </div>
+        <span class="text-[10px] font-bold uppercase tracking-wider">Home</span>
+      </a>
+      <a href="service.html" class="nav-item active flex flex-col items-center justify-center gap-1 text-warm-brown no-underline">
+        <div class="flex items-center justify-center transition-transform hover:-translate-y-0.5">
+          <span class="material-symbols-outlined text-[24px]">spa</span>
+        </div>
+        <span class="text-[10px] font-bold uppercase tracking-wider">Services</span>
+      </a>
+      <a href="account.html" class="nav-item flex flex-col items-center justify-center gap-1 text-neutral-gray hover:text-warm-brown transition-colors no-underline">
+        <div class="flex items-center justify-center transition-transform hover:-translate-y-0.5">
+          <span class="material-symbols-outlined text-[24px]">person</span>
+        </div>
+        <span class="text-[10px] font-bold uppercase tracking-wider">Account</span>
+      </a>
+      <a href="booking.html" class="nav-item flex flex-col items-center justify-center gap-1 text-neutral-gray hover:text-warm-brown transition-colors no-underline">
+        <div class="flex items-center justify-center transition-transform hover:-translate-y-0.5">
+          <span class="material-symbols-outlined text-[24px]">calendar_month</span>
+        </div>
+        <span class="text-[10px] font-bold uppercase tracking-wider">Bookings</span>
+      </a>
+    </div>
+  </nav>
+
+  <!-- ==================== DETAILS MODAL (SCROLL-AWAY IMAGE & STICKY TOP HEADER) ==================== -->
+  <div id="detailsModalScrim" onclick="closeModal()" class="fixed inset-0 z-[60] bg-luxury-black/65 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300 cursor-pointer"></div>
+  <div id="detailsModal" class="fixed bottom-0 left-0 right-0 z-[70] w-full max-w-2xl mx-auto transform translate-y-full transition-transform duration-300 flex flex-col h-[92vh] max-h-[92vh] pointer-events-none">
+    
+    <!-- Top Floating Circular Close Button (Clicking anywhere in this top area closes the modal) -->
+    <div onclick="closeModal()" class="w-full flex justify-center pt-2 pb-2.5 flex-shrink-0 pointer-events-auto cursor-pointer">
+      <button id="closeModalBtn" type="button" onclick="closeModal(); event.stopPropagation();" class="w-9 h-9 rounded-full bg-white text-luxury-black shadow-floating flex items-center justify-center hover:scale-105 active:scale-95 transition-transform">
+        <span class="material-symbols-outlined text-[20px] font-bold">close</span>
+      </button>
+    </div>
+
+    <!-- Main White Sheet (Restored Missing Closing Tag & Scrollbar Classes) -->
+    <div id="modalScrollContainer" class="bg-white rounded-t-[28px] w-full flex-1 min-h-0 overflow-y-auto no-scrollbar shadow-2xl pointer-events-auto flex flex-col pb-12">
+
+      <!-- 1. Swipeable 16:9 Image Slider (Scrolls away when user scrolls up) -->
+ <div class="relative w-full aspect-video flex-shrink-0 bg-ivory hidden overflow-hidden select-none" id="modalImageContainer">
+        <div id="modalImageSlider" class="w-full h-full flex overflow-x-auto snap-x snap-mandatory no-scrollbar scroll-smooth">
+          <!-- Slides injected dynamically via JS -->
+        </div>
+
+        <!-- Top Badge -->
+        <div id="modalBadge" class="hidden absolute top-3 left-3 px-3 py-1 rounded-full bg-luxury-black/80 backdrop-blur-md text-champagne-gold text-[10px] font-bold uppercase tracking-widest shadow-sm pointer-events-none"></div>
+
+        <!-- Bottom-Left Duration Pill (Overlaid on Image like Screenshot) -->
+        <div class="absolute bottom-0 left-0 bg-white rounded-tr-2xl px-3.5 py-1.5 flex items-center gap-1.5 shadow-sm pointer-events-none">
+          <span class="material-symbols-outlined text-[15px] text-[#9E2A5B]">schedule</span>
+          <span id="modalDuration" class="text-[12px] font-bold text-luxury-black"></span>
+        </div>
+
+        <!-- Bottom-Right Slide Dots Indicator -->
+        <div id="modalSliderDots" class="absolute bottom-3 right-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/35 backdrop-blur-sm"></div>
+      </div>
+
+           <!-- 2. STICKY HEADER (Full-Width Single-Line Title on Top, Like & ADD Buttons Below Next to Price/Rating) -->
+      <div class="sticky top-0 z-30 bg-white px-5 py-3.5 border-b border-muted-beige/60 shadow-[0_4px_16px_rgba(6,5,4,0.03)] flex flex-col gap-1.5">
+        
+        <!-- Top Full-Width Row: Category & Single-Line Title -->
+        <div class="w-full min-w-0">
+          <span id="modalCategory" class="text-[9px] font-bold tracking-widest uppercase text-champagne-gold block mb-0.5"></span>
+          <h3 id="modalTitle" class="font-serif text-[18px] sm:text-xl font-bold text-luxury-black leading-snug truncate w-full"></h3>
+        </div>
+
+        <!-- Bottom Row: Price + Rating on Left | Like + ADD Buttons on Right (Blue Box Area) -->
+        <div class="flex items-center justify-between gap-3 pt-0.5">
+          <div class="flex flex-col min-w-0">
+            <!-- Price, MRP & Discount Row -->
+            <div class="flex flex-wrap items-center gap-2">
+              <span id="modalPrice" class="text-[16px] font-extrabold text-luxury-black"></span>
+              <span id="modalMrp" class="text-[13px] text-neutral-gray line-through font-medium"></span>
+              <span id="modalDiscount" class="text-[12px] font-bold text-[#198728] flex items-center gap-0.5"></span>
+            </div>
+
+            <!-- Rating Row -->
+            <div id="modalRatingContainer" class="hidden items-center gap-1 mt-1">
+              <span class="material-symbols-outlined text-[15px] text-amber-500" style="font-variation-settings: 'FILL' 1;">star</span>
+              <span id="modalRating" class="text-[12px] font-bold text-luxury-black"></span>
+              <span id="modalReviewsCount" class="text-[12px] text-neutral-gray underline decoration-dotted underline-offset-2"></span>
+            </div>
+          </div>
+
+          <!-- Right Side (Lowered): Wishlist Heart + ADD Button -->
+          <div class="flex items-center gap-2.5 flex-shrink-0">
+            <button id="modalWishlistBtn" type="button" aria-label="Add to Wishlist"
+              class="w-10 h-10 rounded-full bg-white border border-muted-beige/80 shadow-subtle flex items-center justify-center text-neutral-gray hover:border-muted-rose transition-all active:scale-90">
+              <span id="modalWishlistIcon" class="material-symbols-outlined text-[20px]">favorite</span>
+            </button>
+
+            <button id="modalBookBtn" type="button"
+              class="h-10 px-6 rounded-xl bg-[#A6264C] hover:bg-warm-brown text-white text-[13px] font-bold uppercase tracking-wider transition-all shadow-sm flex items-center justify-center">
+              ADD
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+   
+      <!-- 3. SCROLLABLE DETAILS CONTENT -->
+      <div class="p-5 flex flex-col gap-5 bg-warm-white/50 flex-grow">
+        <!-- Description -->
+        <div>
+          <p id="modalDesc" class="text-[13px] text-luxury-black/80 leading-relaxed"></p>
+        </div>
+
+        <!-- Extra Highlights (Brand Used / Ideal For) -->
+        <div id="modalHighlightsSection" class="hidden grid grid-cols-2 gap-3">
+          <div id="modalBrandBox" class="hidden p-3.5 rounded-2xl bg-white border border-muted-beige/60 shadow-subtle flex flex-col gap-1">
+            <span class="text-[9px] font-bold uppercase tracking-wider text-neutral-gray">Products / Brand</span>
+            <span id="modalBrandText" class="text-[12px] font-bold text-luxury-black leading-snug"></span>
+          </div>
+          <div id="modalIdealForBox" class="hidden p-3.5 rounded-2xl bg-white border border-muted-beige/60 shadow-subtle flex flex-col gap-1">
+            <span class="text-[9px] font-bold uppercase tracking-wider text-neutral-gray">Ideal For</span>
+            <span id="modalIdealForText" class="text-[12px] font-bold text-luxury-black leading-snug"></span>
+          </div>
+        </div>
+
+        <!-- What's Included -->
+        <div id="modalIncludesSection" class="bg-white p-4 rounded-2xl border border-muted-beige/60 shadow-subtle">
+          <h4 class="font-serif text-[16px] font-bold text-warm-brown mb-3">What's Included</h4>
+          <ul id="modalIncludes" class="flex flex-col gap-2.5"></ul>
+        </div>
+
+        <!-- Treatment Steps / Procedure (2-Column Grid like Screenshot 2) -->
+        <div id="modalStepsSection" class="hidden bg-white p-4 rounded-2xl border border-muted-beige/60 shadow-subtle">
+          <h4 class="font-serif text-[16px] font-bold text-warm-brown mb-3.5">Treatment Steps</h4>
+          <div id="modalStepsList" class="grid grid-cols-2 gap-x-4 gap-y-5"></div>
+        </div>
+
+        <!-- Safety / Aftercare Note -->
+        <div id="modalNoteSection" class="hidden p-4 rounded-2xl bg-ivory border border-muted-beige/60 flex items-start gap-2.5">
+          <span class="material-symbols-outlined text-[18px] text-warm-brown mt-0.5">verified_user</span>
+          <div class="flex flex-col gap-0.5">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-warm-brown">Expert Care &amp; Hygiene Note</span>
+            <p id="modalNoteText" class="text-[11px] text-neutral-gray leading-relaxed"></p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Wishlist Toast Popup -->
+
+  <div id="serviceToast" class="fixed top-20 left-1/2 -translate-x-1/2 z-[80] hidden px-4 py-2.5 rounded-full bg-luxury-black/90 text-white text-xs font-bold shadow-floating items-center gap-2">
+    <span class="material-symbols-outlined text-[16px] text-muted-rose" style="font-variation-settings: 'FILL' 1;">favorite</span>
+    <span id="serviceToastMsg">Added to wishlist</span>
+  </div>
+
+  <script src="storage.js"></script>
+  <script src="services.js"></script>
+</body>
+</html>
