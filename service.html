@@ -79,6 +79,16 @@
       content: ''; position: absolute; top: -1px; left: 50%; transform: translateX(-50%); width: 55%; height: 3px; background-color: #31261C; border-radius: 0 0 4px 4px;
     }
     .nav-item.active .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
+
+    /* Global touch fix */
+    button, [role="button"], .cursor-pointer {
+      -webkit-touch-callout: none !important;
+      -webkit-user-select: none !important;
+      user-select: none !important;
+      -webkit-tap-highlight-color: transparent !important;
+    }
+    button { touch-action: manipulation; }
+    html, body { overscroll-behavior: none; }
   </style>
 
 
