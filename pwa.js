@@ -11,6 +11,11 @@
         const isIosStandalone = window.navigator.standalone === true;
         const isInstalledFlag = localStorage.getItem('ee_pwa_installed') === 'true';
 
+        // Auto-persist: if running standalone, mark as installed permanently
+        if ((isStandalone || isIosStandalone) && !isInstalledFlag) {
+            localStorage.setItem('ee_pwa_installed', 'true');
+        }
+
         return isStandalone || isIosStandalone || isInstalledFlag;
     }
 
@@ -27,28 +32,32 @@
         });
     }
 
-    // Hide all PWA download elements immediately
-    function hideAllPwaUI() {
+    // Hide all PWA download elements — INSTANT (no animation) when called for installed check
+    function hideAllPwaUI(animated) {
         const cardSection = document.getElementById('pwaInstallCardSection');
         const headerBtn = document.getElementById('headerPwaInstallBtn');
         const iosModal = document.getElementById('pwaIosModal');
 
         if (cardSection) {
-            cardSection.style.transition = 'all 0.4s ease-out';
-            cardSection.style.opacity = '0';
-            cardSection.style.transform = 'scale(0.96)';
-            setTimeout(() => {
-                cardSection.style.display = 'none';
-            }, 400);
+            if (animated) {
+                cardSection.style.transition = 'all 0.4s ease-out';
+                cardSection.style.opacity = '0';
+                cardSection.style.transform = 'scale(0.96)';
+                setTimeout(() => { cardSection.style.display = 'none'; }, 400);
+            } else {
+                cardSection.style.cssText = 'display:none!important';
+            }
         }
 
         if (headerBtn) {
-            headerBtn.style.transition = 'all 0.3s ease-out';
-            headerBtn.style.opacity = '0';
-            headerBtn.style.transform = 'scale(0.7)';
-            setTimeout(() => {
-                headerBtn.style.display = 'none';
-            }, 300);
+            if (animated) {
+                headerBtn.style.transition = 'all 0.3s ease-out';
+                headerBtn.style.opacity = '0';
+                headerBtn.style.transform = 'scale(0.7)';
+                setTimeout(() => { headerBtn.style.display = 'none'; }, 300);
+            } else {
+                headerBtn.style.cssText = 'display:none!important';
+            }
         }
 
         if (iosModal) {
@@ -99,7 +108,7 @@
     window.addEventListener('appinstalled', () => {
         localStorage.setItem('ee_pwa_installed', 'true');
         deferredPrompt = null;
-        hideAllPwaUI();
+        hideAllPwaUI(true);
         showFeedbackToast('Elegant Escape App installed successfully! 🎉');
     });
 
@@ -174,9 +183,9 @@
 
     // Attach event listeners after DOM loads
     document.addEventListener('DOMContentLoaded', () => {
-        // Initial check: if already installed, hide immediately
+        // Initial check: if already installed, hide INSTANTLY (zero flash)
         if (isAppInstalled()) {
-            hideAllPwaUI();
+            hideAllPwaUI(false);
             return;
         }
 
