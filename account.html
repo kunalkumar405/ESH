@@ -122,6 +122,16 @@
                 opacity: 1;
             }
         }
+
+        /* Global touch fix: prevent text-selection/web-search on button tap */
+        button, [role="button"], .cursor-pointer {
+            -webkit-touch-callout: none !important;
+            -webkit-user-select: none !important;
+            user-select: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+        }
+        button { touch-action: manipulation; }
+        html, body { overscroll-behavior: none; }
     </style>
 
 </head>
