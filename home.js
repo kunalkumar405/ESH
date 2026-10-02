@@ -488,15 +488,17 @@ document.addEventListener('DOMContentLoaded', () => {
         return `
         <div class="min-w-[155px] w-[155px] sm:min-w-[175px] sm:w-[175px] snap-start bg-white rounded-[18px] border border-muted-beige/60 p-2 shadow-subtle flex-shrink-0 flex flex-col justify-between group hover:shadow-card hover:border-champagne-gold transition-all">
           <div class="relative w-full aspect-square rounded-[14px] bg-ivory overflow-hidden cursor-pointer" onclick="window.location.href='service.html?q=${encodeURIComponent(s.name)}'">
-            ${sqImg ? `<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="${sqImg}" alt="${s.name}" />` : ''}
+            ${sqImg
+                ? `<div class="skeleton w-full h-full absolute inset-0"></div><img class="lazy-img w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 absolute inset-0" data-src="${sqImg}" alt="${s.name}" />`
+                : ''}
             
             ${s.badge ? `
-            <div class="absolute top-0 left-0 px-2 py-0.5 rounded-br-lg bg-neutral-700/80 backdrop-blur-md text-white text-[9px] font-bold tracking-wide shadow-sm">
+            <div class="absolute top-0 left-0 px-2 py-0.5 rounded-br-lg bg-neutral-700/80 backdrop-blur-md text-white text-[9px] font-bold tracking-wide shadow-sm z-10">
               ${s.badge}
             </div>` : ''}
 
             ${rating ? `
-            <div class="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded-full bg-white/95 backdrop-blur-md text-luxury-black text-[9px] font-bold flex items-center gap-0.5 shadow-sm">
+            <div class="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded-full bg-white/95 backdrop-blur-md text-luxury-black text-[9px] font-bold flex items-center gap-0.5 shadow-sm z-10">
               <span class="material-symbols-outlined text-[11px] text-amber-500" style="font-variation-settings: 'FILL' 1;">star</span>
               <span>${rating}</span>
             </div>` : ''}
@@ -519,13 +521,14 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
             </div>
 
-            <button type="button" onclick="toggleHomeCart('${s.id}')"
-              class="w-full h-8 mt-2.5 rounded-lg font-bold text-[11px] transition-all flex items-center justify-center gap-1 ${
+            <button type="button"
+              onclick="event.stopPropagation(); toggleHomeCart('${s.id}')"
+              class="w-full h-8 mt-2.5 rounded-lg font-bold text-[11px] transition-all flex items-center justify-center gap-1 cursor-pointer select-none ${
                 inCart
                   ? 'bg-[#FFF0F5] text-[#9E2A5B] border border-[#9E2A5B]/40 shadow-sm'
-                  : 'bg-white hover:bg-[#9E2A5B]/5 text-[#9E2A5B] border border-[#9E2A5B]/30'
+                  : 'bg-white hover:bg-[#9E2A5B] text-[#9E2A5B] hover:text-white border border-[#9E2A5B]/30 active:scale-95'
               }">
-              ${inCart ? '✓ Added' : 'Add To Cart'}
+              ${inCart ? '✓ Added' : '+ Add'}
             </button>
           </div>
         </div>`;
@@ -637,6 +640,9 @@ document.addEventListener('DOMContentLoaded', () => {
         renderRandomSpotlightCard(activeServices, cartIds);
 
         updateHomeBookingBar();
+
+        // Lazy load all images after rendering service cards
+        initLazyImages();
     }
 
     // ==================== SPOTLIGHT SINGLE CARD RENDERER (AS PER SCREENSHOT) ====================
@@ -715,13 +721,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 <!-- Bottom Row: VIEW DETAILS & ADD Button -->
                 <div class="mt-3.5 pt-3 border-t border-dashed border-muted-beige/80 flex items-center justify-between">
-                    <button type="button" onclick="window.location.href='service.html?openModal=${encodeURIComponent(s.id)}'" 
-                        class="text-[11px] font-bold uppercase tracking-wider text-[#9E2A5B] hover:text-warm-brown transition-colors">
+                    <button type="button" onclick="event.stopPropagation(); window.location.href='service.html?openModal=${encodeURIComponent(s.id)}'" 
+                        class="text-[11px] font-bold uppercase tracking-wider text-[#9E2A5B] hover:text-warm-brown transition-colors cursor-pointer">
                         VIEW DETAILS
                     </button>
                     
-                    <button type="button" onclick="toggleHomeCart('${s.id}')"
-                        class="h-8 px-6 rounded-xl font-bold uppercase text-[11px] tracking-wider transition-all shadow-sm flex items-center justify-center gap-1 ${
+                    <button type="button"
+                        onclick="event.stopPropagation(); toggleHomeCart('${s.id}')"
+                        class="h-8 px-6 rounded-xl font-bold uppercase text-[11px] tracking-wider transition-all shadow-sm flex items-center justify-center gap-1 cursor-pointer select-none active:scale-95 ${
                             inCart
                                 ? 'bg-[#FFF0F5] text-[#9E2A5B] border border-[#9E2A5B]/40 shadow-sm'
                                 : 'bg-[#FFF0F5] hover:bg-[#9E2A5B] text-[#9E2A5B] hover:text-white border border-[#9E2A5B]/30'
@@ -1060,10 +1067,52 @@ document.addEventListener('DOMContentLoaded', () => {
         }).join('');
     }
 
+    // ==================== LAZY IMAGE OBSERVER ====================
+    function initLazyImages() {
+        const lazyImgs = document.querySelectorAll('img.lazy-img');
+        if (!lazyImgs.length) return;
+
+        if ('IntersectionObserver' in window) {
+            const observer = new IntersectionObserver((entries, obs) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        const src = img.getAttribute('data-src');
+                        if (src) {
+                            img.src = src;
+                            img.onload = () => {
+                                img.classList.add('loaded');
+                                // Remove skeleton sibling
+                                const skeleton = img.previousElementSibling;
+                                if (skeleton && skeleton.classList.contains('skeleton')) {
+                                    skeleton.style.display = 'none';
+                                }
+                            };
+                            img.removeAttribute('data-src');
+                        }
+                        obs.unobserve(img);
+                    }
+                });
+            }, { rootMargin: '120px 0px', threshold: 0 });
+
+            lazyImgs.forEach(img => observer.observe(img));
+        } else {
+            // Fallback: load all immediately
+            lazyImgs.forEach(img => {
+                const src = img.getAttribute('data-src');
+                if (src) { img.src = src; img.classList.add('loaded'); }
+            });
+        }
+    }
+
     // 1. Instant 0ms Render from Local Cache
     try {
         const cachedHome = JSON.parse(localStorage.getItem('ee_home_rtdb_cache'));
-        if (cachedHome) applyHomeData(cachedHome);
+        if (cachedHome) {
+            applyHomeData(cachedHome);
+            // Defer lazy image init so DOM is fully painted first
+            requestAnimationFrame(() => initLazyImages());
+        }
     } catch (e) {}
 
     // 2. Live Fetch from Firebase Realtime Database (RTDB)
@@ -1102,6 +1151,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             applyHomeData(homePayload);
             updateHomeBookingBar();
+            // Trigger lazy loading for newly rendered images
+            requestAnimationFrame(() => initLazyImages());
 
             // Realtime listener for live promo section updates (including Book Now button toggle)
             let unsubscribePromo = null;
