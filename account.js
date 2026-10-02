@@ -1252,25 +1252,29 @@ if (showLoginBtn && showSignupBtn) {
 let isSigningUp = false;
 let isGoogleLogin = false;
 
+// completeProfileModal: clicking outside should NOT dismiss it
+// The user MUST fill the form to have a proper account
 if (cpModal) {
     cpModal.addEventListener('click', async (e) => {
-        if (e.target === cpModal) {
-            isGoogleLogin = false;
-            cpModal.classList.add('hidden');
-            cpModal.classList.remove('flex');
-            authContainer.classList.remove('hidden');
-        }
+        // Intentionally blocked: user must complete profile to proceed
+        // Do not dismiss on outside click
     });
 }
 
-// Listener for Auth State (Persistent Session - Never auto-logouts unless user clicks Sign Out)
+// ======================= AUTH STATE LISTENER (Persistent Session) =======================
+// Rules:
+// 1. If user is logged in Firebase + has local cache → show profile immediately
+// 2. If user is logged in Firebase + no cache → sync from DB
+// 3. If DB has no record (new Google user) → show complete profile modal (ALWAYS, not just first time)
+// 4. If user is NOT logged in Firebase but has local cache → keep showing profile (offline mode)
+// 5. If user is NOT logged in and no cache → show auth screen
 onAuthStateChanged(auth, async (user) => {
     if (isSigningUp) return;
 
     const cached = EE_STORAGE.getProfile();
 
     if (user) {
-        // अगर उसी ब्राउज़र में एडमिन ईमेल लॉग-इन हो गया है और यूजर का लोकल कैश पहले से मौजूद है, तो यूजर का प्रोफाइल सुरक्षित रखें
+        // Admin email protection: don't overwrite user session with admin session
         if (user.email === 'kkbot405@gmail.com' && cached.uid && cached.name) {
             currentUserUid = cached.uid;
             authContainer.classList.add('hidden');
@@ -1287,32 +1291,52 @@ onAuthStateChanged(auth, async (user) => {
         const isCacheExpired = (now - cached.lastSync) > ONE_HOUR_MS;
 
         if (hasValidCache) {
+            // Instantly show profile from cache
             authContainer.classList.add('hidden');
             cpModal.classList.add('hidden');
             cpModal.classList.remove('flex');
             profileContainer.classList.remove('hidden');
             profileContainer.classList.add('flex');
 
+            // Background sync if cache is stale
             if (isCacheExpired) {
-                await window.syncProfileFromFirestore(false);
+                window.syncProfileFromFirestore(false);
             }
         } else {
+            // No valid cache: must sync from DB
             const syncStatus = await window.syncProfileFromFirestore(false);
+
             if (syncStatus === 'exists') {
+                // Profile found in DB: show profile
                 authContainer.classList.add('hidden');
                 cpModal.classList.add('hidden');
                 cpModal.classList.remove('flex');
                 profileContainer.classList.remove('hidden');
                 profileContainer.classList.add('flex');
-            } else if (syncStatus === 'not_found' && isGoogleLogin) {
+            } else if (syncStatus === 'not_found') {
+                // New user (Google or other): profile doesn't exist yet → show complete form
+                // This handles BOTH first-time Google login AND page reload before profile is saved
                 authContainer.classList.add('hidden');
-                document.getElementById('cpName').value = user.displayName || '';
+                profileContainer.classList.add('hidden');
+                profileContainer.classList.remove('flex');
+                const cpNameEl = document.getElementById('cpName');
+                if (cpNameEl) cpNameEl.value = user.displayName || '';
                 cpModal.classList.remove('hidden');
                 cpModal.classList.add('flex');
+            } else {
+                // Error: show cached profile or auth screen
+                if (cached.name) {
+                    authContainer.classList.add('hidden');
+                    profileContainer.classList.remove('hidden');
+                    profileContainer.classList.add('flex');
+                } else {
+                    authContainer.classList.remove('hidden');
+                }
             }
         }
     } else {
-        // अगर लोकल स्टोरेज में यूजर का सेशन पहले से सेव है, तो उसे अपने-आप लॉग आउट न करें
+        // Not logged in to Firebase
+        // Rule 4: If local cache exists, keep showing profile (offline / session mode)
         if (cached.uid && cached.name) {
             currentUserUid = cached.uid;
             authContainer.classList.add('hidden');
@@ -1321,6 +1345,7 @@ onAuthStateChanged(auth, async (user) => {
             return;
         }
 
+        // Rule 5: No user, no cache → show auth
         currentUserUid = null;
         isGoogleLogin = false;
         profileContainer.classList.add('hidden');
