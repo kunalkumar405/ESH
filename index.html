@@ -227,7 +227,48 @@
     .lazy-img.loaded {
       opacity: 1;
     }
+
+    /* ===== GLOBAL TOUCH FIX: Prevent text-selection & web-search on tap ===== */
+    button, [role="button"], .cursor-pointer {
+      -webkit-touch-callout: none !important;
+      -webkit-user-select: none !important;
+      -moz-user-select: none !important;
+      user-select: none !important;
+      -webkit-tap-highlight-color: transparent !important;
+    }
+    button {
+      touch-action: manipulation;
+    }
+
+    /* ===== FULL IMMERSIVE APP FEEL ===== */
+    html, body {
+      overscroll-behavior: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    /* In standalone PWA mode: maximise content area */
+    @media all and (display-mode: standalone) {
+      body {
+        /* Ensure content starts below any OS chrome */
+        padding-top: env(safe-area-inset-top, 0px);
+      }
+    }
   </style>
+
+  <!-- ===== PWA INSTANT HIDE (runs sync before render to prevent flash) ===== -->
+  <script>
+    (function() {
+      var isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+      var isIosStandalone = window.navigator.standalone === true;
+      var isInstalledFlag = (typeof localStorage !== 'undefined') && localStorage.getItem('ee_pwa_installed') === 'true';
+      var isDismissed = (typeof sessionStorage !== 'undefined') && sessionStorage.getItem('ee_pwa_dismissed') === 'true';
+      if (isStandalone || isIosStandalone || isInstalledFlag || isDismissed) {
+        // Inject a style rule before DOM renders — zero-flash guarantee
+        var s = document.createElement('style');
+        s.textContent = '#pwaInstallCardSection { display: none !important; } #headerPwaInstallBtn { display: none !important; }';
+        document.head.appendChild(s);
+      }
+    })();
+  </script>
 
 
 </head>
