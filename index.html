@@ -7,10 +7,10 @@
     name="viewport" />
   <meta content="mobile_tab" name="shell-type" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Elegant Escape" />
   <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="theme-color" content="#060504" />
+  <meta name="theme-color" content="#F8F6F2" />
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="https://ik.imagekit.io/nsyr92pse/file_000000007260820b9b5c312bcdb076c4.png" />
   <title>Elegant Escape - Doorstep Luxury Salon</title>
@@ -208,6 +208,24 @@
       background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.65), transparent);
       animation: pwaShimmerSweep 3s infinite ease-in-out;
       pointer-events: none;
+    }
+    /* Lazy Loading Skeleton Shimmer */
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    .skeleton {
+      background: linear-gradient(90deg, #EDE8E2 25%, #F5F2ED 50%, #EDE8E2 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s ease-in-out infinite;
+      border-radius: 12px;
+    }
+    .lazy-img {
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+    .lazy-img.loaded {
+      opacity: 1;
     }
   </style>
 
