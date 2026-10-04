@@ -57,6 +57,7 @@ const initBookingApp = async () => {
         confirmDatetime:     document.getElementById('confirm-datetime'),
         confirmTotal:        document.getElementById('confirm-total'),
         confirmWhatsappBtn:  document.getElementById('confirmWhatsappBtn'),
+        confirmInvoiceBtn:   document.getElementById('confirmInvoiceBtn'),
         serviceAreaSelect:   document.getElementById('serviceAreaSelect'),
         areaErrorMsg:        document.getElementById('areaErrorMsg'),
 
@@ -1349,6 +1350,7 @@ const initBookingApp = async () => {
 
                 if (EE_STORAGE.addBookedSlots && slotsToLock.length > 0) EE_STORAGE.addBookedSlots(slotsToLock);
                 EE_STORAGE.setBooking(orderPayload);
+                localStorage.setItem('ee_current_invoice', JSON.stringify(orderPayload));
                 EE_CART.clear();
                 localStorage.removeItem('ee_booking_schedules');
 
@@ -1361,6 +1363,9 @@ const initBookingApp = async () => {
                 const whatsappUrl = buildWhatsAppOrderMessage(orderPayload);
                 if (dom.confirmWhatsappBtn) {
                     dom.confirmWhatsappBtn.href = whatsappUrl;
+                }
+                if (dom.confirmInvoiceBtn) {
+                    dom.confirmInvoiceBtn.href = `invoice.html?id=${encodeURIComponent(orderId)}`;
                 }
 
                 if (dom.confirmId) dom.confirmId.innerText = '#' + orderId;
