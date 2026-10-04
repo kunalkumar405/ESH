@@ -1041,7 +1041,7 @@ window.downloadInvoice = function(orderId) {
     if (booking) {
         // डेटा को लोकल स्टोरेज में सेव करके नया टैब खोलें
         localStorage.setItem('ee_current_invoice', JSON.stringify(booking));
-        window.open('invoice.html', '_blank');
+        window.open(`invoice.html?id=${encodeURIComponent(orderId)}`, '_blank');
     } else {
         alert("Booking details not found!");
     }
