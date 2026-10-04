@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <!-- ब्रह्मास्त्र 1: चौड़ाई को 850 फिक्स कर दिया ताकि मोबाइल ब्राउज़र इसे A4 की तरह ज़ूम-आउट कर दे -->
     <meta name="viewport" content="width=850, user-scalable=yes" />
     <title>Tax Invoice - Elegant Escape</title>
     
@@ -15,9 +14,12 @@
     <!-- html2pdf for Professional PDF Download -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
+    <!-- QRCode.js CDN for instant local zero-CORS QR code rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-   <script>
+    <script>
         tailwind.config = {
             theme: {
                 extend: {
@@ -39,284 +41,413 @@
         };
     </script>
     
-     <style>
-        body { background-color: #f3f4f6; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    <style>
+        body { 
+            background-color: #f3f4f6; 
+            -webkit-print-color-adjust: exact; 
+            print-color-adjust: exact; 
+        }
         
         /* Forces A4 Layout on All Devices */
-        .invoice-wrapper { width: 100%; overflow-x: auto; padding: 1rem; display: flex; justify-content: center; }
+        .invoice-wrapper { 
+            width: 100%; 
+            overflow-x: auto; 
+            padding: 1.5rem 1rem; 
+            display: flex; 
+            justify-content: center; 
+        }
         .invoice-wrapper::-webkit-scrollbar { display: none; }
         .invoice-wrapper { -ms-overflow-style: none; scrollbar-width: none; }
         
         .invoice-container { 
             width: 800px; 
-            min-width: 800px; 
-            min-height: 1131px; 
+            max-width: 800px; 
+            min-height: 1080px; 
             background: #FAF7F2; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
+            box-shadow: 0 12px 35px rgba(0,0,0,0.08); 
             position: relative;
+            box-sizing: border-box;
         }
 
-        /* BRAHMASTRA FIX 2: Prevents text & icons from shifting down in html2canvas */
-        * { text-rendering: geometricPrecision; -webkit-font-smoothing: antialiased; font-variant-ligatures: none; }
+        /* Prevents text & icons from shifting down in html2canvas */
+        * { 
+            text-rendering: geometricPrecision; 
+            -webkit-font-smoothing: antialiased; 
+            font-variant-ligatures: none; 
+        }
         .material-symbols-outlined { 
             line-height: 1 !important; 
             vertical-align: middle !important; 
             display: inline-block !important; 
         }
-        /* Forces baseline correction for flex items in html2canvas */
         div, span, p { transform: translateZ(0); }
         
         @media print {
             body { background-color: #FAF7F2; margin: 0; padding: 0; }
             .invoice-wrapper { padding: 0; overflow: visible; display: block; }
-            .invoice-container { box-shadow: none; margin: 0 auto; width: 100%; min-width: 100%; min-height: auto; }
+            .invoice-container { 
+                box-shadow: none; 
+                margin: 0 auto; 
+                width: 100%; 
+                max-width: 100%; 
+                min-height: auto; 
+            }
             .no-print { display: none !important; }
-            @page { margin: 0.5cm; }
+            @page { size: A4; margin: 8mm 6mm; }
         }
     </style>
-
 </head>
 <body class="text-dark-brown font-sans antialiased">
 
-    <!-- Floating Actions -->
-    <div id="action-buttons" class="no-print fixed top-4 right-4 flex gap-3 z-50">
-        <button onclick="window.close()" class="px-5 py-2.5 rounded-full bg-white border border-gray-200 text-luxury-black font-bold text-xs uppercase tracking-wider shadow-md hover:bg-gray-50 transition">
-            Close
+    <!-- Floating Actions Bar -->
+    <div id="action-buttons" class="no-print fixed top-4 right-4 flex items-center gap-2.5 z-50">
+        <button type="button" onclick="handleInvoiceClose()" class="px-4 py-2.5 rounded-full bg-white border border-gray-200 text-luxury-black font-bold text-xs uppercase tracking-wider shadow-md hover:bg-gray-50 transition flex items-center gap-1.5 cursor-pointer">
+            <span class="material-symbols-outlined text-[17px]">arrow_back</span>
+            <span>Back</span>
         </button>
-        <button onclick="downloadAsPDF()" class="px-5 py-2.5 rounded-full bg-elegant-rose text-white font-bold text-xs uppercase tracking-wider shadow-md hover:bg-luxury-black transition flex items-center gap-2">
-            <span class="material-symbols-outlined text-[18px]">picture_as_pdf</span> Download PDF
+        <button type="button" onclick="window.print()" class="px-4 py-2.5 rounded-full bg-white border border-luxury-gold/50 text-luxury-black font-bold text-xs uppercase tracking-wider shadow-md hover:bg-light-gold/20 transition flex items-center gap-1.5 cursor-pointer">
+            <span class="material-symbols-outlined text-[17px] text-luxury-gold">print</span>
+            <span>Print</span>
+        </button>
+        <button type="button" id="btn-download-pdf" onclick="downloadAsPDF()" class="px-5 py-2.5 rounded-full bg-elegant-rose text-white font-bold text-xs uppercase tracking-wider shadow-md hover:bg-luxury-black transition flex items-center gap-2 cursor-pointer">
+            <span id="btn-pdf-icon" class="material-symbols-outlined text-[18px]">picture_as_pdf</span>
+            <span id="btn-pdf-text">Download PDF</span>
         </button>
     </div>
 
     <!-- WRAPPER: Allows horizontal scroll on mobile while keeping A4 fixed size -->
     <div class="invoice-wrapper">
+
         <!-- INVOICE PAPER -->
-        <div id="invoice-paper" class="invoice-container p-10 flex-shrink-0">
+        <div id="invoice-paper" class="invoice-container p-8 sm:p-9 flex-shrink-0 flex flex-col justify-between">
             
-            <!-- Background Accents -->
-            <div class="absolute top-0 right-0 w-64 h-64 bg-soft-blush rounded-full mix-blend-multiply filter blur-3xl opacity-50 pointer-events-none -translate-y-1/2 translate-x-1/3"></div>
-            <div class="absolute bottom-0 left-0 w-80 h-80 bg-light-gold rounded-full mix-blend-multiply filter blur-3xl opacity-30 pointer-events-none translate-y-1/3 -translate-x-1/4"></div>
+            <!-- Top Section of Paper -->
+            <div>
+                <!-- Background Subtle Accents -->
+                <div class="absolute top-0 right-0 w-64 h-64 bg-soft-blush rounded-full mix-blend-multiply filter blur-3xl opacity-50 pointer-events-none -translate-y-1/2 translate-x-1/3"></div>
+                <div class="absolute bottom-0 left-0 w-80 h-80 bg-light-gold rounded-full mix-blend-multiply filter blur-3xl opacity-30 pointer-events-none translate-y-1/3 -translate-x-1/4"></div>
 
-            <!-- HEADER -->
-            <header class="flex justify-between items-start border-b-2 border-luxury-gold/20 pb-6 relative z-10">
-                <div class="flex items-center gap-4">
-                    <img src="https://ik.imagekit.io/nsyr92pse/file_000000007260820b9b5c312bcdb076c4.png" crossorigin="anonymous" alt="Elegant Escape Logo" class="w-16 h-16 object-contain" />
-                    <div class="flex flex-col">
-                        <h1 class="font-serif text-3xl font-extrabold tracking-tight text-luxury-black uppercase">Elegant Escape</h1>
-                        <span class="text-sm tracking-[0.2em] text-dark-brown font-semibold uppercase mt-0.5">Doorstep Luxury Salon</span>
-                        <div class="mt-2 px-3 py-1 rounded-full bg-soft-blush text-elegant-rose text-[9px] font-bold tracking-[0.15em] uppercase w-fit">
-                            Beauty • Wellness • At Your Doorstep
+                <!-- HEADER -->
+                <header class="flex justify-between items-start border-b-2 border-luxury-gold/20 pb-5 relative z-10">
+                    <div class="flex items-center gap-4">
+                        <img src="https://ik.imagekit.io/nsyr92pse/file_000000007260820b9b5c312bcdb076c4.png" crossorigin="anonymous" alt="Elegant Escape Logo" class="w-16 h-16 object-contain drop-shadow-sm" />
+                        <div class="flex flex-col">
+                            <h1 class="font-serif text-3xl font-extrabold tracking-tight text-luxury-black uppercase">Elegant Escape</h1>
+                            <span class="text-xs tracking-[0.22em] text-dark-brown font-semibold uppercase mt-0.5">Doorstep Luxury Salon</span>
+                            <div class="mt-2 flex items-center gap-2">
+                                <span class="px-3 py-0.5 rounded-full bg-soft-blush text-elegant-rose text-[9px] font-bold tracking-[0.12em] uppercase">
+                                    Beauty • Wellness • At Your Doorstep
+                                </span>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="text-right flex flex-col items-end">
-                    <h2 class="font-serif text-2xl font-bold tracking-widest text-luxury-black uppercase mb-3">Tax Invoice</h2>
-                    <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-dark-brown text-left">
-                        <span class="font-semibold">Invoice No</span> <span id="inv-number" class="font-medium">: Loading...</span>
-                        <span class="font-semibold">Invoice Date</span> <span id="inv-date" class="font-medium">: Loading...</span>
-                        <span class="font-semibold">Booking ID</span> <span id="inv-booking-id" class="font-medium">: Loading...</span>
-                        <span class="font-bold text-elegant-rose">Booking Mode</span> <span id="inv-booking-mode" class="font-bold text-elegant-rose">: Loading...</span>
+                    <div class="text-right flex flex-col items-end">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="px-2.5 py-0.5 rounded bg-luxury-gold/15 text-luxury-gold font-bold text-[10px] tracking-widest uppercase">Official Receipt</span>
+                            <h2 class="font-serif text-2xl font-bold tracking-widest text-luxury-black uppercase">Tax Invoice</h2>
+                        </div>
+                        <div class="grid grid-cols-2 gap-x-2 gap-y-1 text-xs text-dark-brown text-left bg-white/70 backdrop-blur-sm px-3.5 py-2 rounded-xl border border-soft-blush/60">
+                            <span class="font-semibold text-gray-500">Invoice No</span> 
+                            <span id="inv-number" class="font-bold text-luxury-black">: Loading...</span>
+                            <span class="font-semibold text-gray-500">Invoice Date</span> 
+                            <span id="inv-date" class="font-medium">: Loading...</span>
+                            <span class="font-semibold text-gray-500">Booking ID</span> 
+                            <span id="inv-booking-id" class="font-medium">: Loading...</span>
+                            <span class="font-semibold text-gray-500">Service Mode</span> 
+                            <span id="inv-booking-mode" class="font-bold text-elegant-rose">: Loading...</span>
+                        </div>
                     </div>
-                </div>
-            </header>
+                </header>
 
-            <!-- CUSTOMER & BUSINESS DETAILS -->
-            <div class="grid grid-cols-2 gap-6 mt-6 relative z-10">
-                <!-- BILL TO -->
-                <div class="p-5 rounded-2xl bg-white border border-soft-blush shadow-sm flex gap-4">
-                    <div class="w-10 h-10 rounded-full bg-soft-blush flex items-center justify-center text-elegant-rose flex-shrink-0">
-                        <span class="material-symbols-outlined">person</span>
-                    </div>
-                    <div class="flex flex-col">
-                        <span class="text-[10px] font-bold uppercase tracking-widest text-elegant-rose mb-1.5">Bill To</span>
-                        <span id="inv-customer-name" class="font-serif text-[17px] font-bold text-luxury-black leading-none mb-2">Customer Name</span>
-                        <div class="flex items-center gap-1.5 text-xs text-dark-brown mt-1">
-                            <span class="material-symbols-outlined text-[14px] text-luxury-gold">call</span>
-                            <span id="inv-customer-phone">Phone Number</span>
+                <!-- CUSTOMER & BUSINESS DETAILS -->
+                <div class="grid grid-cols-2 gap-5 mt-5 relative z-10">
+                    <!-- BILL TO -->
+                    <div class="p-4 rounded-2xl bg-white border border-soft-blush shadow-sm flex gap-3.5">
+                        <div class="w-10 h-10 rounded-full bg-soft-blush flex items-center justify-center text-elegant-rose flex-shrink-0 shadow-inner">
+                            <span class="material-symbols-outlined text-[20px]">person</span>
                         </div>
-                        <div class="flex items-start gap-1.5 text-xs text-dark-brown mt-1.5">
-                            <span class="material-symbols-outlined text-[14px] text-luxury-gold mt-0.5">location_on</span>
-                            <span id="inv-customer-address" class="leading-snug">Customer Address</span>
+                        <div class="flex flex-col min-w-0 flex-1">
+                            <span class="text-[9px] font-bold uppercase tracking-widest text-elegant-rose mb-1">Bill To (Customer)</span>
+                            <span id="inv-customer-name" class="font-serif text-base font-bold text-luxury-black leading-tight truncate">Customer Name</span>
+                            <div class="flex items-center gap-1.5 text-xs text-dark-brown mt-1">
+                                <span class="material-symbols-outlined text-[13px] text-luxury-gold">call</span>
+                                <span id="inv-customer-phone" class="font-medium">Phone Number</span>
+                            </div>
+                            <div class="flex items-start gap-1.5 text-xs text-dark-brown mt-1">
+                                <span class="material-symbols-outlined text-[13px] text-luxury-gold mt-0.5">location_on</span>
+                                <span id="inv-customer-address" class="leading-snug text-dark-brown/90">Customer Address</span>
+                            </div>
+                            <div id="inv-customer-email-row" class="hidden items-center gap-1.5 text-xs text-dark-brown/80 mt-1">
+                                <span class="material-symbols-outlined text-[13px] text-luxury-gold">mail</span>
+                                <span id="inv-customer-email" class="truncate">Email Address</span>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- FROM -->
-                <div class="p-5 rounded-2xl bg-white border border-soft-blush shadow-sm flex gap-4">
-                    <div class="w-10 h-10 rounded-full bg-soft-blush flex items-center justify-center text-elegant-rose flex-shrink-0">
-                        <span class="material-symbols-outlined">storefront</span>
-                    </div>
-                    <div class="flex flex-col">
-                        <span class="text-[10px] font-bold uppercase tracking-widest text-elegant-rose mb-1.5">From</span>
-                        <span class="font-serif text-[17px] font-bold text-luxury-black leading-none mb-1">Elegant Escape</span>
-                        <span class="text-[11px] font-medium text-dark-brown/80 mb-2">Doorstep Luxury Salon</span>
-                        <div class="flex items-start gap-1.5 text-xs text-dark-brown mt-1">
-                            <span class="material-symbols-outlined text-[14px] text-luxury-gold mt-0.5">location_on</span>
-                            <span class="leading-snug">Goel Market, Gandhi Nagar,<br>Jammu - 180004</span>
+                    <!-- FROM -->
+                    <div class="p-4 rounded-2xl bg-white border border-soft-blush shadow-sm flex gap-3.5">
+                        <div class="w-10 h-10 rounded-full bg-soft-blush flex items-center justify-center text-elegant-rose flex-shrink-0 shadow-inner">
+                            <span class="material-symbols-outlined text-[20px]">storefront</span>
                         </div>
-                        <div class="flex items-center gap-1.5 text-xs text-dark-brown mt-1.5">
-                            <span class="material-symbols-outlined text-[14px] text-luxury-gold">call</span>
-                            <span>+91 7780910928</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ITEMS TABLE -->
-            <div class="mt-8 rounded-2xl border border-soft-blush overflow-hidden bg-white relative z-10 shadow-sm">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-soft-blush/50 text-[11px] uppercase tracking-wider text-elegant-rose">
-                            <th class="py-3 px-4 font-bold w-12 text-center">S.No.</th>
-                            <th class="py-3 px-4 font-bold">Service Details</th>
-                            <th class="py-3 px-4 font-bold text-center w-16">Qty</th>
-                            <th class="py-3 px-4 font-bold text-right w-24">Price (₹)</th>
-                            <th class="py-3 px-4 font-bold text-right w-28">Amount (₹)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="inv-items-body" class="text-sm">
-                        <!-- JS will inject rows here -->
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- SUMMARY & PAYMENT DETAILS -->
-            <div class="mt-6 flex justify-between items-start relative z-10 gap-6">
-                
-                <!-- Payment Info -->
-                <div class="flex flex-col gap-3 w-1/2">
-                    <div class="bg-white px-4 py-3 rounded-xl border border-gray-100 flex items-center justify-between shadow-sm">
-                        <div class="flex items-center gap-3">
-                            <span class="material-symbols-outlined text-gray-400">payments</span>
-                            <span class="text-xs font-semibold text-dark-brown">Payment Status</span>
-                        </div>
-                        <div id="inv-payment-status" class="px-3 py-1 rounded-full bg-green-100 text-green-700 font-bold text-[10px] uppercase tracking-widest flex items-center gap-1">
-                            <span class="material-symbols-outlined text-[12px]">check_circle</span> PAID
-                        </div>
-                    </div>
-                    <div class="bg-white px-4 py-3 rounded-xl border border-gray-100 flex items-center justify-between shadow-sm">
-                        <div class="flex items-center gap-3">
-                            <span class="material-symbols-outlined text-gray-400">credit_card</span>
-                            <span class="text-xs font-semibold text-dark-brown">Payment Method</span>
-                        </div>
-                        <div class="text-right">
-                            <span id="inv-payment-method" class="block text-sm font-bold text-luxury-black">Online / Pay on Service</span>
+                        <div class="flex flex-col min-w-0 flex-1">
+                            <span class="text-[9px] font-bold uppercase tracking-widest text-elegant-rose mb-1">Service Provider (From)</span>
+                            <span class="font-serif text-base font-bold text-luxury-black leading-tight">Elegant Escape</span>
+                            <span class="text-[11px] font-medium text-dark-brown/80">Doorstep Luxury Salon</span>
+                            <div class="flex items-start gap-1.5 text-xs text-dark-brown mt-1">
+                                <span class="material-symbols-outlined text-[13px] text-luxury-gold mt-0.5">location_on</span>
+                                <span class="leading-snug">Goel Market, Gandhi Nagar, Jammu - 180004</span>
+                            </div>
+                            <div class="flex items-center justify-between text-xs text-dark-brown mt-1">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="material-symbols-outlined text-[13px] text-luxury-gold">call</span>
+                                    <span>+91 7780910928</span>
+                                </div>
+                                <a href="https://elegantsalons.in/" target="_blank" class="flex items-center gap-1 text-elegant-rose hover:underline font-semibold text-[11px]">
+                                    <span class="material-symbols-outlined text-[12px]">language</span> elegantsalons.in
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Totals -->
-                <div class="w-1/2 bg-soft-blush/20 rounded-2xl p-5 border border-soft-blush flex flex-col gap-2.5">
-                    <div class="flex justify-between items-center text-sm font-medium text-dark-brown">
-                        <span>Services Subtotal</span>
-                        <span id="inv-subtotal">₹0</span>
-                    </div>
-                    <div id="inv-discount-row" class="flex justify-between items-center text-sm font-medium text-elegant-rose hidden">
-                        <span>Discount</span>
-                        <span id="inv-discount">- ₹0</span>
-                    </div>
-                    <div id="inv-travel-row" class="flex justify-between items-center text-sm font-medium text-dark-brown hidden">
-                        <span>Travel Charge</span>
-                        <span id="inv-travel">₹0</span>
-                    </div>
-                    <div id="inv-conv-row" class="flex justify-between items-center text-sm font-medium text-dark-brown hidden">
-                        <span>Convenience Fee</span>
-                        <span id="inv-conv">₹0</span>
-                    </div>
-                    <div id="inv-hygiene-row" class="flex justify-between items-center text-sm font-medium text-dark-brown hidden">
-                        <span>Hygiene Kit</span>
-                        <span id="inv-hygiene">₹0</span>
-                    </div>
-                    <div class="border-t border-elegant-rose/20 my-1"></div>
-                    <div class="flex justify-between items-center">
-                        <span class="font-serif font-bold text-lg text-luxury-black">Total Amount</span>
-                        <span id="inv-total" class="font-serif font-extrabold text-2xl text-luxury-black">₹0</span>
-                    </div>
+                <!-- ITEMS TABLE -->
+                <div class="mt-5 rounded-2xl border border-soft-blush overflow-hidden bg-white relative z-10 shadow-sm">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-soft-blush/40 text-[11px] uppercase tracking-wider text-elegant-rose border-b border-soft-blush">
+                                <th class="py-3 px-4 font-bold w-12 text-center">S.No.</th>
+                                <th class="py-3 px-4 font-bold">Service Details &amp; Scheduled Slot</th>
+                                <th class="py-3 px-4 font-bold text-center w-16">Qty</th>
+                                <th class="py-3 px-4 font-bold text-right w-24">Price (₹)</th>
+                                <th class="py-3 px-4 font-bold text-right w-28">Amount (₹)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inv-items-body" class="text-sm divide-y divide-gray-100">
+                            <!-- JS will inject rows here -->
+                        </tbody>
+                    </table>
                 </div>
 
-            </div>
-
-            <!-- FOOTER & QR CODE -->
-            <!-- mt-12 को कम करके mt-5 कर दिया गया है ताकि स्पेसिंग सही रहे -->
-            <footer class="mt-5 pt-5 border-t-2 border-luxury-gold/20 flex justify-between items-end relative z-10">
-                <div class="flex flex-col gap-4">
-                    <div>
-                        <h3 class="font-serif italic text-3xl text-elegant-rose font-semibold mb-1">Thank you<span class="text-luxury-gold">.</span></h3>
-                        <p class="text-sm font-bold text-dark-brown">for choosing Elegant Escape.</p>
-                        <p class="text-[11px] text-gray-500 italic mt-1">Professional beauty & wellness at your doorstep.</p>
-                    </div>
+                <!-- SUMMARY & PAYMENT DETAILS -->
+                <div class="mt-5 flex justify-between items-start relative z-10 gap-5">
                     
-                    <div class="flex items-center gap-6 mt-2">
-                        <div class="flex flex-col items-center gap-1">
-                            <div class="w-8 h-8 rounded-full bg-soft-blush text-elegant-rose flex items-center justify-center"><span class="material-symbols-outlined text-[16px]">workspace_premium</span></div>
-                            <span class="text-[8px] font-bold uppercase tracking-wider text-center">Premium<br>Services</span>
+                    <!-- Payment Info -->
+                    <div class="flex flex-col gap-2.5 w-1/2">
+                        <div class="bg-white px-4 py-3 rounded-xl border border-gray-100 flex items-center justify-between shadow-sm">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-7 h-7 rounded-full bg-soft-blush/60 text-dark-brown flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-[15px]">payments</span>
+                                </div>
+                                <span class="text-xs font-semibold text-dark-brown">Payment Status</span>
+                            </div>
+                            <div id="inv-payment-status" class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 font-bold text-[10px] uppercase tracking-widest flex items-center gap-1">
+                                <span class="material-symbols-outlined text-[13px]">check_circle</span> PAID
+                            </div>
                         </div>
-                        <div class="flex flex-col items-center gap-1">
-                            <div class="w-8 h-8 rounded-full bg-soft-blush text-elegant-rose flex items-center justify-center"><span class="material-symbols-outlined text-[16px]">health_and_safety</span></div>
-                            <span class="text-[8px] font-bold uppercase tracking-wider text-center">Hygienic<br>& Safe</span>
+                        <div class="bg-white px-4 py-3 rounded-xl border border-gray-100 flex items-center justify-between shadow-sm">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-7 h-7 rounded-full bg-soft-blush/60 text-dark-brown flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-[15px]">credit_card</span>
+                                </div>
+                                <span class="text-xs font-semibold text-dark-brown">Payment Method</span>
+                            </div>
+                            <div class="text-right">
+                                <span id="inv-payment-method" class="block text-xs font-bold text-luxury-black">Pay after Service (Cash / UPI)</span>
+                            </div>
                         </div>
-                        <div class="flex flex-col items-center gap-1">
-                            <div class="w-8 h-8 rounded-full bg-soft-blush text-elegant-rose flex items-center justify-center"><span class="material-symbols-outlined text-[16px]">home_pin</span></div>
-                            <span class="text-[8px] font-bold uppercase tracking-wider text-center">At Your<br>Doorstep</span>
-                        </div>
-                        <div class="flex flex-col items-center gap-1">
-                            <div class="w-8 h-8 rounded-full bg-soft-blush text-elegant-rose flex items-center justify-center"><span class="material-symbols-outlined text-[16px]">psychology</span></div>
-                            <span class="text-[8px] font-bold uppercase tracking-wider text-center">Expert<br>Professionals</span>
+                        <div class="bg-white/60 p-3 rounded-xl border border-dashed border-soft-blush text-[10px] text-gray-500 leading-relaxed">
+                            <span class="font-bold text-dark-brown">Salon Assurance:</span> 100% hygienic disposables, authentic salon-grade products &amp; verified professional artists.
                         </div>
                     </div>
-                </div>
 
-                <div class="flex items-center gap-5">
-                    <div class="flex flex-col items-center p-2 rounded-xl bg-white border border-gray-200 shadow-sm">
-                        <!-- Crossorigin added to allow html2canvas to fetch image smoothly -->
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=https://www.elegantescape.in" crossorigin="anonymous" alt="QR Code" class="w-[72px] h-[72px]" />
-                        <span class="text-[8px] font-bold text-luxury-gold mt-1 uppercase tracking-widest">Scan to Book</span>
+                    <!-- Totals Breakdown -->
+                    <div class="w-1/2 bg-soft-blush/25 rounded-2xl p-4 sm:p-5 border border-soft-blush flex flex-col gap-2">
+                        <div class="flex justify-between items-center text-xs font-medium text-dark-brown">
+                            <span>Services Subtotal</span>
+                            <span id="inv-subtotal" class="font-semibold">₹0</span>
+                        </div>
+                        <div id="inv-discount-row" class="flex justify-between items-center text-xs font-medium text-elegant-rose hidden">
+                            <span id="inv-discount-label">Discount</span>
+                            <span id="inv-discount" class="font-bold">- ₹0</span>
+                        </div>
+                        <div id="inv-travel-row" class="flex justify-between items-center text-xs font-medium text-dark-brown hidden">
+                            <span>Travel &amp; Logistics Charge</span>
+                            <span id="inv-travel" class="font-semibold">₹0</span>
+                        </div>
+                        <div id="inv-conv-row" class="flex justify-between items-center text-xs font-medium text-dark-brown hidden">
+                            <span>Convenience &amp; Platform Fee</span>
+                            <span id="inv-conv" class="font-semibold">₹0</span>
+                        </div>
+                        <div id="inv-hygiene-row" class="flex justify-between items-center text-xs font-medium text-dark-brown hidden">
+                            <span>Safety &amp; Hygiene Kit Fee</span>
+                            <span id="inv-hygiene" class="font-semibold">₹0</span>
+                        </div>
+                        <div class="border-t border-elegant-rose/20 my-1"></div>
+                        <div class="flex justify-between items-center">
+                            <span class="font-serif font-bold text-base text-luxury-black">Total Amount Payable</span>
+                            <span id="inv-total" class="font-serif font-extrabold text-2xl text-luxury-black">₹0</span>
+                        </div>
+                        <div class="text-[9px] text-gray-500 text-right mt-0.5">
+                            * Prices are inclusive of all applicable taxes
+                        </div>
                     </div>
-                </div>
-            </footer>
 
-            <div class="mt-6 text-center text-[9px] text-gray-400 font-medium relative z-10 flex justify-between px-2">
-                <span>This is a computer-generated invoice and does not require a signature.</span>
-                <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">language</span> www.elegantescape.in</span>
+                </div>
+            </div>
+
+            <!-- Bottom Section: FOOTER & QR CODE -->
+            <div class="mt-5">
+                <footer class="pt-4 border-t-2 border-luxury-gold/20 flex justify-between items-end relative z-10">
+                    <div class="flex flex-col gap-3">
+                        <div>
+                            <h3 class="font-serif italic text-2xl text-elegant-rose font-semibold mb-0.5">Thank you<span class="text-luxury-gold">.</span></h3>
+                            <p class="text-xs font-bold text-dark-brown">for choosing Elegant Escape.</p>
+                            <p class="text-[11px] text-gray-500 italic mt-0.5">Professional doorstep beauty &amp; wellness experience.</p>
+                        </div>
+                        
+                        <!-- Trust Badges -->
+                        <div class="flex items-center gap-5 mt-1">
+                            <div class="flex flex-col items-center gap-1">
+                                <div class="w-7 h-7 rounded-full bg-soft-blush text-elegant-rose flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-[15px]">workspace_premium</span>
+                                </div>
+                                <span class="text-[8px] font-bold uppercase tracking-wider text-center text-dark-brown/80">Premium<br>Services</span>
+                            </div>
+                            <div class="flex flex-col items-center gap-1">
+                                <div class="w-7 h-7 rounded-full bg-soft-blush text-elegant-rose flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-[15px]">health_and_safety</span>
+                                </div>
+                                <span class="text-[8px] font-bold uppercase tracking-wider text-center text-dark-brown/80">Hygienic<br>&amp; Safe</span>
+                            </div>
+                            <div class="flex flex-col items-center gap-1">
+                                <div class="w-7 h-7 rounded-full bg-soft-blush text-elegant-rose flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-[15px]">home_pin</span>
+                                </div>
+                                <span class="text-[8px] font-bold uppercase tracking-wider text-center text-dark-brown/80">At Your<br>Doorstep</span>
+                            </div>
+                            <div class="flex flex-col items-center gap-1">
+                                <div class="w-7 h-7 rounded-full bg-soft-blush text-elegant-rose flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-[15px]">verified</span>
+                                </div>
+                                <span class="text-[8px] font-bold uppercase tracking-wider text-center text-dark-brown/80">Expert<br>Artists</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- QR CODE CONTAINER (pointing to https://elegantsalons.in/) -->
+                    <div class="flex items-center gap-5">
+                        <a href="https://elegantsalons.in/" target="_blank" rel="noopener noreferrer" class="flex flex-col items-center p-2.5 rounded-2xl bg-white border border-gray-200/80 shadow-sm hover:shadow-md hover:border-luxury-gold/50 transition-all group cursor-pointer text-center no-underline" title="Scan or click to visit elegantsalons.in">
+                            <div id="inv-qr-container" class="relative flex items-center justify-center w-[74px] h-[74px] bg-white rounded-lg overflow-hidden">
+                                <!-- Dynamic Local QR Canvas OR Fallback Image -->
+                                <img id="inv-qr-code" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https%3A%2F%2Felegantsalons.in%2F&color=111111&bgcolor=ffffff&margin=4" crossorigin="anonymous" alt="Scan to Book at elegantsalons.in" class="w-[74px] h-[74px] object-contain group-hover:scale-105 transition-transform" />
+                            </div>
+                            <span class="text-[8px] font-extrabold text-luxury-gold mt-1.5 uppercase tracking-widest flex items-center gap-0.5">
+                                Scan to Book <span class="material-symbols-outlined text-[10px]">open_in_new</span>
+                            </span>
+                            <span class="text-[7.5px] font-semibold text-dark-brown/70 tracking-tight mt-0.5">elegantsalons.in</span>
+                        </a>
+                    </div>
+                </footer>
+
+                <!-- Bottom Disclaimers & Website Link -->
+                <div class="mt-4 text-center text-[9px] text-gray-400 font-medium relative z-10 flex justify-between items-center px-1">
+                    <span>This is a computer-generated tax invoice and does not require a physical signature.</span>
+                    <a href="https://elegantsalons.in/" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1 font-semibold text-dark-brown/80 hover:text-elegant-rose transition-colors">
+                        <span class="material-symbols-outlined text-[12px] text-luxury-gold">language</span> elegantsalons.in
+                    </a>
+                </div>
             </div>
 
         </div>
+
+        <!-- FALLBACK EMPTY STATE (If no invoice data found) -->
+        <div id="invoice-empty-state" class="hidden max-w-md w-full bg-white p-8 rounded-3xl border border-soft-blush shadow-xl text-center my-12 self-center flex-col items-center">
+            <div class="w-16 h-16 rounded-full bg-soft-blush text-elegant-rose flex items-center justify-center mb-4">
+                <span class="material-symbols-outlined text-[32px]">receipt_long</span>
+            </div>
+            <h3 class="font-serif text-xl font-bold text-luxury-black mb-2">No Invoice Selected</h3>
+            <p class="text-xs text-gray-500 mb-6 leading-relaxed">
+                Please open your booking details from your Account to generate and view the tax invoice.
+            </p>
+            <div class="flex flex-col gap-2.5 w-full">
+                <a href="account.html" class="w-full py-3 rounded-full bg-elegant-rose text-white text-xs font-bold uppercase tracking-wider shadow-md hover:bg-luxury-black transition text-center no-underline">
+                    View My Bookings
+                </a>
+                <a href="index.html" class="w-full py-3 rounded-full bg-ivory border border-gray-200 text-dark-brown text-xs font-bold uppercase tracking-wider hover:bg-gray-100 transition text-center no-underline">
+                    Back to Home
+                </a>
+            </div>
+        </div>
+
     </div> <!-- Close Wrapper -->
 
     <!-- Script to populate data -->
     <script src="invoice.js"></script>
-     <script>
+    <script>
+        // Back / Close Navigation Handler
+        window.handleInvoiceClose = function() {
+            if (window.opener && !window.opener.closed) {
+                window.close();
+            } else if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = 'account.html';
+            }
+        };
+
         // Professional PDF Download Logic using html2pdf.js
         window.downloadAsPDF = function() {
             const btnDiv = document.getElementById('action-buttons');
-            btnDiv.style.display = 'none'; // PDF बनने से पहले बटन छिपाएँ
+            const dlBtn = document.getElementById('btn-download-pdf');
+            const dlText = document.getElementById('btn-pdf-text');
+            const dlIcon = document.getElementById('btn-pdf-icon');
             
-            window.scrollTo(0, 0); // स्क्रॉल फिक्स
+            if (dlBtn && dlBtn.disabled) return;
+            if (dlBtn) dlBtn.disabled = true;
+            if (dlText) dlText.innerText = "Generating PDF...";
+            if (dlIcon) dlIcon.innerText = "hourglass_top";
+
+            btnDiv.style.visibility = 'hidden';
+            window.scrollTo(0, 0);
             
             const invoiceEl = document.getElementById('invoice-paper');
-            let invNo = document.getElementById('inv-number').innerText.replace(': ', '').trim();
-            if(!invNo || invNo === "Loading...") invNo = "Order";
+            let invNo = (document.getElementById('inv-number')?.innerText || '').replace(/^[:\s#]+/, '').trim();
+            if (!invNo || invNo === "Loading...") invNo = "Order";
             
-            // PDF Options (A4 Size Configuration)
+            // PDF Options (Exact A4 Proportion)
             const opt = {
-                margin:       0,
+                margin:       [4, 4, 4, 4], // 4mm margin prevents border cutoff
                 filename:     `Elegant_Escape_Invoice_${invNo}.pdf`,
-                image:        { type: 'jpeg', quality: 1 },
-                html2canvas:  { scale: 2, useCORS: true, scrollY: 0, windowY: 0 },
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { 
+                    scale: 2, 
+                    useCORS: true, 
+                    scrollY: 0, 
+                    windowY: 0, 
+                    logging: false,
+                    letterRendering: true
+                },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
             };
 
-            // फोंट्स पूरी तरह लोड होने के बाद PDF बनाएँ
+            // Generate PDF after fonts are loaded
             document.fonts.ready.then(() => {
                 setTimeout(() => {
                     html2pdf().set(opt).from(invoiceEl).save().then(() => {
-                        btnDiv.style.display = 'flex'; // डाउनलोड होने के बाद बटन वापस दिखाएँ
+                        btnDiv.style.visibility = 'visible';
+                        if (dlBtn) dlBtn.disabled = false;
+                        if (dlText) dlText.innerText = "Download PDF";
+                        if (dlIcon) dlIcon.innerText = "picture_as_pdf";
                     }).catch(err => {
-                        console.error(err);
-                        alert("Failed to generate PDF.");
-                        btnDiv.style.display = 'flex';
+                        console.error("PDF generation failed:", err);
+                        btnDiv.style.visibility = 'visible';
+                        if (dlBtn) dlBtn.disabled = false;
+                        if (dlText) dlText.innerText = "Download PDF";
+                        if (dlIcon) dlIcon.innerText = "picture_as_pdf";
+                        alert("Could not create PDF automatically. You can use 'Print' -> 'Save as PDF' from your browser.");
                     });
-                }, 300);
+                }, 250);
             });
         };
     </script>
