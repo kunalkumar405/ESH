@@ -89,6 +89,10 @@ const initBookingApp = async () => {
 
     const ALL_SLOTS = TIME_GROUPS.flatMap(g => g.slots);
 
+    // Slot Capacity Configuration (Up to 10 persons per slot at the same time)
+    const DEFAULT_SLOT_CAPACITY = 10;
+    let slotCapacity = DEFAULT_SLOT_CAPACITY;
+
     const serviceSchedules = (() => {
         try {
             return JSON.parse(localStorage.getItem('ee_booking_schedules')) || {};
@@ -161,7 +165,7 @@ const initBookingApp = async () => {
         return `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]}`;
     }
 
-    // ==================== 1. FIRESTORE GLOBAL SLOT LOCKING ====================
+    // ==================== 1. REALTIME GLOBAL SLOT LOCKING & CAPACITY (MAX 10 PERSONS) ====================
 
     async function fetchBookedSlotsFromFirestore() {
         try {
@@ -170,19 +174,43 @@ const initBookingApp = async () => {
 
             if (snap.exists()) {
                 const bookingsObj = snap.val() || {};
-                Object.values(bookingsObj).forEach(b => {
+                Object.entries(bookingsObj).forEach(([orderKey, b]) => {
                     if (!b) return;
                     const status = String(b.status || 'pending').toLowerCase();
                     if (status === 'cancelled' || status === 'rejected') return;
 
+                    const bookingId = b.id || orderKey;
+                    const orderSlotKeys = new Set();
+
+                    // Each booking order represents 1 person request. Deduplicate slots inside the same order.
                     if (Array.isArray(b.items) && b.items.length > 0) {
                         b.items.forEach(item => {
-                            if (item.date && item.time) {
-                                locked.push({ date: item.date, time: item.time, mode: item.mode || 'Home' });
+                            if (item.date && item.time && item.time !== 'Anytime') {
+                                const mode = (item.mode || b.mode || 'Home').trim();
+                                const key = `${item.date}|${item.time}|${mode.toLowerCase()}`;
+                                if (!orderSlotKeys.has(key)) {
+                                    orderSlotKeys.add(key);
+                                    locked.push({
+                                        bookingId: bookingId,
+                                        date: item.date,
+                                        time: item.time,
+                                        mode: mode
+                                    });
+                                }
                             }
                         });
-                    } else if (b.date && b.time) {
-                        locked.push({ date: b.date, time: b.time, mode: b.mode || 'Home' });
+                    } else if (b.date && b.time && b.time !== 'Anytime') {
+                        const mode = (b.mode || 'Home').trim();
+                        const key = `${b.date}|${b.time}|${mode.toLowerCase()}`;
+                        if (!orderSlotKeys.has(key)) {
+                            orderSlotKeys.add(key);
+                            locked.push({
+                                bookingId: bookingId,
+                                date: b.date,
+                                time: b.time,
+                                mode: mode
+                            });
+                        }
                     }
                 });
             }
@@ -199,19 +227,51 @@ const initBookingApp = async () => {
         }
     }
 
-    function isSlotBookedInDB(dateStr, timeSlot, mode = 'Home') {
-        if (timeSlot === 'Anytime') return false; 
-        return firestoreBookedSlots.some(b => {
-            const bMode = b.mode || 'Home';
-            return b.date === dateStr && b.time === timeSlot && bMode.toLowerCase() === mode.toLowerCase();
-        });
+    function getSlotCapacity(dateStr, timeSlot, mode = 'Home') {
+        return slotCapacity || DEFAULT_SLOT_CAPACITY;
     }
 
-        // नया फंक्शन: चेक करने के लिए कि स्लॉट का टाइम बीत तो नहीं गया (30 मिनट के बफर के साथ)
+    function getSlotBookedCount(dateStr, timeSlot, mode = 'Home') {
+        if (!dateStr || !timeSlot || timeSlot === 'Anytime') return 0;
+        const targetMode = String(mode || 'Home').toLowerCase();
+        const uniqueBookings = new Set();
+        let unindexedCount = 0;
+
+        (firestoreBookedSlots || []).forEach(b => {
+            if (!b || !b.date || !b.time) return;
+            const bMode = String(b.mode || 'Home').toLowerCase();
+            if (b.date === dateStr && b.time === timeSlot && bMode === targetMode) {
+                if (b.bookingId) {
+                    uniqueBookings.add(String(b.bookingId));
+                } else {
+                    unindexedCount++;
+                }
+            }
+        });
+
+        return uniqueBookings.size + unindexedCount;
+    }
+
+    function getSlotSpotsRemaining(dateStr, timeSlot, mode = 'Home') {
+        if (!dateStr || !timeSlot || timeSlot === 'Anytime') return 999;
+        const cap = getSlotCapacity(dateStr, timeSlot, mode);
+        const booked = getSlotBookedCount(dateStr, timeSlot, mode);
+        return Math.max(0, cap - booked);
+    }
+
+    function isSlotBookedInDB(dateStr, timeSlot, mode = 'Home') {
+        if (timeSlot === 'Anytime') return false; 
+        return getSlotSpotsRemaining(dateStr, timeSlot, mode) <= 0;
+    }
+
+    // स्लॉट का टाइम बीत तो नहीं गया चेक करने के लिए (30 मिनट के बफर के साथ)
     function isSlotExpired(dateStr, timeSlot) {
+        if (!dateStr || !timeSlot) return false;
+        const todayStr = getLocalDateString(new Date());
+
         if (timeSlot === 'Anytime') {
-            const todayStr = getLocalDateString(new Date());
-            if (dateStr !== todayStr) return false;
+            if (dateStr < todayStr) return true;
+            if (dateStr > todayStr) return false;
             const now = new Date();
             now.setMinutes(now.getMinutes() + 30);
             const lastSlotTime = new Date();
@@ -219,50 +279,45 @@ const initBookingApp = async () => {
             return lastSlotTime < now;
         }
 
-        const today = new Date();
-        const slotDate = new Date(dateStr + 'T00:00:00');
-        
-        // अगर चुनी गई तारीख भविष्य की है, तो एक्सपायर नहीं है
-        if (slotDate.setHours(0,0,0,0) > today.setHours(0,0,0,0)) return false;
-        // अगर पुरानी तारीख है, तो एक्सपायर है
-        if (slotDate.setHours(0,0,0,0) < today.setHours(0,0,0,0)) return true;
+        if (dateStr < todayStr) return true;
+        if (dateStr > todayStr) return false;
 
         // आज की तारीख है, तो टाइम कैलकुलेट करें
-        const [time, modifier] = timeSlot.split(' ');
-        let [hours, minutes] = time.split(':');
-        hours = parseInt(hours, 10);
-        if (hours === 12 && modifier === 'AM') hours = 0;
-        if (hours < 12 && modifier === 'PM') hours += 12;
+        try {
+            const parts = timeSlot.trim().split(' ');
+            if (parts.length < 2) return false;
+            const [time, modifier] = parts;
+            let [hours, minutes] = time.split(':');
+            hours = parseInt(hours, 10);
+            if (isNaN(hours)) return false;
+            if (hours === 12 && modifier.toUpperCase() === 'AM') hours = 0;
+            if (hours < 12 && modifier.toUpperCase() === 'PM') hours += 12;
 
-        const slotTime = new Date();
-        slotTime.setHours(hours, parseInt(minutes, 10), 0, 0);
+            const slotTime = new Date();
+            slotTime.setHours(hours, parseInt(minutes, 10) || 0, 0, 0);
 
-        const now = new Date();
-        now.setMinutes(now.getMinutes() + 30); // 30 मिनट का बुकिंग बफर
+            const now = new Date();
+            now.setMinutes(now.getMinutes() + 30); // 30 मिनट का बुकिंग बफर
 
-        return slotTime < now;
+            return slotTime < now;
+        } catch (e) {
+            return false;
+        }
     }
 
     function isSlotUsedByOtherCartItem(dateStr, timeSlot, currentServiceId, mode = 'Home') {
-        if (timeSlot === 'Anytime') return false; 
-        return Object.entries(serviceSchedules).some(([sId, sched]) => {
-            const sMode = sched.mode || 'Home';
-            return String(sId) !== String(currentServiceId) &&
-                   sched.date === dateStr &&
-                   sched.time === timeSlot &&
-                   sMode.toLowerCase() === mode.toLowerCase();
-        });
+        // Multi-person slot system: multiple services by the same customer can use the same slot.
+        return false;
     }
 
     function findFirstAvailableSlot(dateStr, serviceId, mode = 'Home') {
         for (const slot of ALL_SLOTS) {
-            if (!isSlotExpired(dateStr, slot) && !isSlotBookedInDB(dateStr, slot, mode) && !isSlotUsedByOtherCartItem(dateStr, slot, serviceId, mode)) {
+            if (!isSlotExpired(dateStr, slot) && !isSlotBookedInDB(dateStr, slot, mode)) {
                 return slot;
             }
         }
         return null;
     }
-
 
     function findAvailableDateAndSlot(serviceId, mode = 'Home') {
         const today = new Date();
@@ -280,15 +335,21 @@ const initBookingApp = async () => {
 
     function initDefaultSchedules() {
         if (typeof EE_CART === 'undefined') return;
+        let sharedAvailable = null;
         EE_CART.items.forEach(id => {
             const existing = serviceSchedules[id];
             const currentMode = existing?.mode || 'Home';
-            if (!existing || isSlotBookedInDB(existing.date, existing.time, currentMode) || isSlotUsedByOtherCartItem(existing.date, existing.time, id, currentMode)) {
-                const best = findAvailableDateAndSlot(id, currentMode);
+            const isExpired = existing ? isSlotExpired(existing.date, existing.time) : true;
+            const isFull = existing ? isSlotBookedInDB(existing.date, existing.time, currentMode) : true;
+
+            if (!existing || isExpired || isFull) {
+                if (!sharedAvailable || sharedAvailable.mode !== currentMode) {
+                    sharedAvailable = { mode: currentMode, ...findAvailableDateAndSlot(id, currentMode) };
+                }
                 serviceSchedules[id] = {
                     mode: currentMode,
-                    date: best.date,
-                    time: best.time
+                    date: sharedAvailable.date,
+                    time: sharedAvailable.time
                 };
             }
         });
@@ -558,6 +619,10 @@ const initBookingApp = async () => {
             const modeIcon = isHome ? 'home' : 'storefront';
             const modeLabel = isHome ? 'At Home' : 'At Salon';
             const displayTime = sched.time === 'Anytime' ? '(Flexible Time)' : sched.time;
+            const spotsRemaining = sched.time !== 'Anytime' ? getSlotSpotsRemaining(sched.date, sched.time, sched.mode) : 999;
+            const spotsBadge = (sched.time !== 'Anytime' && spotsRemaining < 999)
+                ? `<span class="px-1.5 py-0.5 rounded-md text-[9px] font-bold ${spotsRemaining <= 2 ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'} whitespace-nowrap">${spotsRemaining} left</span>`
+                : '';
 
             html += `
             <div class="bg-white rounded-[20px] border border-muted-beige/70 shadow-card overflow-hidden transition-all" id="bks-${s.id}">
@@ -582,7 +647,7 @@ const initBookingApp = async () => {
                     </div>
                 </div>
 
-                <button type="button" onclick="openSlotModal('${s.id}')" class="w-full px-3.5 py-2.5 bg-gradient-to-r from-ivory/80 to-[#FFF0F5]/50 border-t border-dashed border-muted-beige/80 flex items-center justify-between gap-1 cursor-pointer hover:bg-[#FFF0F5] transition-all group focus:outline-none">
+                <button type="button" onclick="openSlotModal('${s.id}')" class="w-full px-3.5 py-2.5 bg-gradient-to-r from-ivory/80 to-[#FFF0F5]/50 border-t border-dashed border-muted-beige/80 flex items-center justify-between gap-1.5 cursor-pointer hover:bg-[#FFF0F5] transition-all group focus:outline-none">
                     <div class="flex items-center gap-1.5 min-w-0 flex-grow">
                         <span class="px-1.5 py-0.5 rounded-md border text-[9px] font-bold uppercase tracking-wider flex items-center gap-0.5 flex-shrink-0 ${modeBadgeClass}">
                             <span class="material-symbols-outlined text-[12px]">${modeIcon}</span> ${modeLabel}
@@ -590,6 +655,7 @@ const initBookingApp = async () => {
                         <span class="text-[11px] font-bold text-luxury-black whitespace-nowrap flex-shrink-0">
                             ${formatDateDisplay(sched.date)} • ${displayTime}
                         </span>
+                        ${spotsBadge}
                     </div>
                     <div class="flex items-center justify-center gap-1.5 px-2 py-1 rounded-full bg-white border border-[#9E2A5B]/30 shadow-subtle group-hover:border-[#9E2A5B] group-hover:shadow-sm transition-all flex-shrink-0">
                         <div class="relative flex h-2 w-2 items-center justify-center">
@@ -648,7 +714,7 @@ const initBookingApp = async () => {
     };
 
 
-        window.openSlotModal = async function(serviceId) {
+    window.openSlotModal = async function(serviceId) {
         const s = SERVICES.find(x => String(x.id) === String(serviceId));
         if (!s || !serviceSchedules[serviceId]) return;
 
@@ -657,12 +723,14 @@ const initBookingApp = async () => {
 
         if (dom.modalServiceTitle) dom.modalServiceTitle.innerText = s.name;
 
+        const applyToAllEl = document.getElementById('modalApplyToAllCheckbox');
+        if (applyToAllEl) applyToAllEl.checked = true;
+
         await fetchBookedSlotsFromFirestore();
 
-        // चेक करें कि सेव किया गया स्लॉट एक्सपायर, बुक या इस्तेमाल तो नहीं हो गया
+        // चेक करें कि सेव किया गया स्लॉट एक्सपायर या फुल तो नहीं हो गया
         if (isSlotExpired(tempModalState.date, tempModalState.time) || 
-            isSlotBookedInDB(tempModalState.date, tempModalState.time, tempModalState.mode) ||
-            isSlotUsedByOtherCartItem(tempModalState.date, tempModalState.time, serviceId, tempModalState.mode)) {
+            isSlotBookedInDB(tempModalState.date, tempModalState.time, tempModalState.mode)) {
             
             let free = findFirstAvailableSlot(tempModalState.date, serviceId, tempModalState.mode);
             if (!free) {
@@ -697,8 +765,7 @@ const initBookingApp = async () => {
     window.setModalMode = function(mode) {
         tempModalState.mode = mode;
         if (isSlotExpired(tempModalState.date, tempModalState.time) || 
-            isSlotBookedInDB(tempModalState.date, tempModalState.time, tempModalState.mode) || 
-            isSlotUsedByOtherCartItem(tempModalState.date, tempModalState.time, activeEditingServiceId, tempModalState.mode)) {
+            isSlotBookedInDB(tempModalState.date, tempModalState.time, tempModalState.mode)) {
             const nextFree = findFirstAvailableSlot(tempModalState.date, activeEditingServiceId, tempModalState.mode);
             tempModalState.time = nextFree || '';
         }
@@ -750,8 +817,7 @@ const initBookingApp = async () => {
     window.selectModalDate = function(dateStr) {
         tempModalState.date = dateStr;
         if (isSlotExpired(dateStr, tempModalState.time) || 
-            isSlotBookedInDB(dateStr, tempModalState.time, tempModalState.mode) || 
-            isSlotUsedByOtherCartItem(dateStr, tempModalState.time, activeEditingServiceId, tempModalState.mode)) {
+            isSlotBookedInDB(dateStr, tempModalState.time, tempModalState.mode)) {
             const nextFree = findFirstAvailableSlot(dateStr, activeEditingServiceId, tempModalState.mode);
             tempModalState.time = nextFree || '';
         }
@@ -760,8 +826,7 @@ const initBookingApp = async () => {
         updateModalPreviewText();
     };
 
-
-        function renderModalTimeSlots() {
+    function renderModalTimeSlots() {
         const anytimeCont = document.getElementById('anytimeContainer');
         if (!dom.timeContainer || !anytimeCont) return;
 
@@ -789,7 +854,7 @@ const initBookingApp = async () => {
                         <span class="material-symbols-outlined text-[18px] ${isAnytimeSelected ? 'text-champagne-gold' : 'text-neutral-gray'}">schedule</span>
                         <span class="text-[13px] font-bold">Anytime (Flexible)</span>
                     </div>
-                    <span class="text-[10px] font-semibold opacity-80">We will assign a free slot</span>
+                    <span class="text-[10px] font-semibold opacity-80">Flexible • Up to 10 persons</span>
                 </button>
             `;
         }
@@ -800,8 +865,10 @@ const initBookingApp = async () => {
             let sHtml = '';
             g.slots.forEach(slot => {
                 const isExpired = isSlotExpired(tempModalState.date, slot);
-                const bookedDB = isSlotBookedInDB(tempModalState.date, slot, tempModalState.mode);
-                const usedInCart = isSlotUsedByOtherCartItem(tempModalState.date, slot, activeEditingServiceId, tempModalState.mode);
+                const bookedCount = getSlotBookedCount(tempModalState.date, slot, tempModalState.mode);
+                const capacity = getSlotCapacity(tempModalState.date, slot, tempModalState.mode);
+                const spotsLeft = Math.max(0, capacity - bookedCount);
+                const isFull = !isExpired && (spotsLeft <= 0);
                 const isSelected = tempModalState.time === slot;
 
                 if (isExpired) {
@@ -810,19 +877,34 @@ const initBookingApp = async () => {
                         <span class="text-[11px] font-bold text-neutral-gray/60 line-through">${slot}</span>
                         <span class="text-[8px] font-bold text-muted-rose uppercase mt-0.5 tracking-wider">Expired</span>
                     </button>`;
-                } else if (bookedDB || usedInCart) {
+                } else if (isFull) {
                     sHtml += `
-                    <button type="button" disabled class="py-2.5 px-2 rounded-xl bg-ivory/50 border border-muted-beige/40 flex flex-col items-center justify-center cursor-not-allowed opacity-60">
-                        <span class="text-[12px] font-bold text-neutral-gray/60 line-through">${slot}</span>
+                    <button type="button" disabled class="py-2.5 px-2 rounded-xl bg-ivory/60 border border-muted-beige/40 flex flex-col items-center justify-center cursor-not-allowed opacity-60">
+                        <span class="text-[11px] font-bold text-neutral-gray/60 line-through">${slot}</span>
+                        <span class="text-[8px] font-bold text-neutral-gray uppercase mt-0.5 tracking-wider">Full (${capacity}/${capacity})</span>
                     </button>`;
                 } else {
                     const btnClass = isSelected
-                        ? 'bg-luxury-black border-luxury-black text-white shadow-sm ring-2 ring-champagne-gold/30'
-                        : (isAnytimeSelected ? 'bg-white/50 border-muted-beige/40 text-neutral-gray/70 hover:border-warm-brown hover:bg-ivory/50 hover:text-luxury-black' : 'bg-white border-muted-beige/70 text-luxury-black hover:border-warm-brown hover:bg-ivory/50');
+                        ? 'bg-luxury-black border-luxury-black text-white shadow-md ring-2 ring-champagne-gold/40'
+                        : (isAnytimeSelected 
+                            ? 'bg-white/60 border-muted-beige/40 text-neutral-gray/70 hover:border-warm-brown hover:bg-ivory/50 hover:text-luxury-black' 
+                            : 'bg-white border-muted-beige/70 text-luxury-black hover:border-warm-brown hover:bg-ivory/40');
+
+                    let badgeHtml = '';
+                    if (isSelected) {
+                        badgeHtml = `<span class="text-[8px] font-bold text-champagne-gold uppercase mt-0.5">${spotsLeft} spot${spotsLeft === 1 ? '' : 's'} left</span>`;
+                    } else if (bookedCount === 0) {
+                        badgeHtml = `<span class="text-[8px] font-semibold text-[#2E8B57] mt-0.5">${capacity} free</span>`;
+                    } else if (spotsLeft <= 2) {
+                        badgeHtml = `<span class="text-[8px] font-bold text-amber-600 mt-0.5">${spotsLeft} left!</span>`;
+                    } else {
+                        badgeHtml = `<span class="text-[8px] font-semibold text-neutral-gray mt-0.5">${spotsLeft} left</span>`;
+                    }
 
                     sHtml += `
-                    <button type="button" onclick="selectModalTime('${slot}')" class="py-2.5 px-2 rounded-xl border flex items-center justify-center transition-all cursor-pointer ${btnClass}">
-                        <span class="text-[12px] font-bold">${slot}</span>
+                    <button type="button" onclick="selectModalTime('${slot}')" class="py-2.5 px-2 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer ${btnClass}">
+                        <span class="text-[12px] font-bold leading-tight">${slot}</span>
+                        ${badgeHtml}
                     </button>`;
                 }
             });
@@ -838,7 +920,6 @@ const initBookingApp = async () => {
 
         dom.timeContainer.innerHTML = html;
     }
-
 
     window.selectModalTime = function(slot) {
         tempModalState.time = slot;
@@ -857,24 +938,40 @@ const initBookingApp = async () => {
              dom.modalSelectedPreview.innerText = `${modeTxt} • ${formatDateDisplay(tempModalState.date)} (Flexible Time)`;
              return;
         }
-        dom.modalSelectedPreview.innerText = `${modeTxt} • ${formatDateDisplay(tempModalState.date)} at ${tempModalState.time}`;
+        const spotsLeft = getSlotSpotsRemaining(tempModalState.date, tempModalState.time, tempModalState.mode);
+        const spotsTxt = spotsLeft < 999 ? ` (${spotsLeft} spot${spotsLeft === 1 ? '' : 's'} available)` : '';
+        dom.modalSelectedPreview.innerText = `${modeTxt} • ${formatDateDisplay(tempModalState.date)} at ${tempModalState.time}${spotsTxt}`;
     }
 
     if (dom.closeSlotModalBtn) dom.closeSlotModalBtn.addEventListener('click', closeSlotModal);
     if (dom.slotModalScrim) dom.slotModalScrim.addEventListener('click', closeSlotModal);
-         if (dom.saveSlotBtn) {
+    if (dom.saveSlotBtn) {
         dom.saveSlotBtn.addEventListener('click', () => {
             if (!tempModalState.time) {
                 alert("Please select an available time slot.");
                 return;
             }
-            if (activeEditingServiceId) {
-                serviceSchedules[activeEditingServiceId] = { ...tempModalState };
-                saveSchedulesToLocal(); // FIX 2: लोकल स्टोरेज में सेव ताकि रीलोड पर रिसेट न हो
-                renderSelectedServices();
-                updateVenueVisibility(); // FIX 1: सेव करते ही एड्रेस वाला सेक्शन हाइड/शो करने के लिए
-                updateTotals(); 
+            if (isSlotBookedInDB(tempModalState.date, tempModalState.time, tempModalState.mode)) {
+                alert("This time slot is fully booked (10/10 persons reached). Please select an available slot.");
+                return;
             }
+
+            const applyToAllEl = document.getElementById('modalApplyToAllCheckbox');
+            const shouldApplyToAll = applyToAllEl ? applyToAllEl.checked : true;
+
+            if (shouldApplyToAll && typeof EE_CART !== 'undefined' && EE_CART.getCount() > 0) {
+                // Apply this chosen slot to all services in cart
+                EE_CART.items.forEach(id => {
+                    serviceSchedules[id] = { ...tempModalState };
+                });
+            } else if (activeEditingServiceId) {
+                serviceSchedules[activeEditingServiceId] = { ...tempModalState };
+            }
+
+            saveSchedulesToLocal();
+            renderSelectedServices();
+            updateVenueVisibility();
+            updateTotals();
             closeSlotModal();
         });
     }
@@ -1230,6 +1327,7 @@ const initBookingApp = async () => {
 
                 const bookedItems = [];
                 const slotsToLock = [];
+                const orderSlotKeys = new Set();
                 const orderId = 'EE-' + Math.floor(10000 + Math.random() * 90000);
 
                 for (const id of EE_CART.items) {
@@ -1237,8 +1335,9 @@ const initBookingApp = async () => {
                     const sc = serviceSchedules[id];
                     if (!s || !sc) continue;
 
-                    if (isSlotBookedInDB(sc.date, sc.time, sc.mode)) {
-                        alert(`Sorry! The slot ${formatDateDisplay(sc.date)} at ${sc.time} (${sc.mode}) for "${s.name}" was just booked by another customer. Please choose another available slot.`);
+                    if (sc.time !== 'Anytime' && isSlotBookedInDB(sc.date, sc.time, sc.mode)) {
+                        const cap = getSlotCapacity(sc.date, sc.time, sc.mode);
+                        alert(`Sorry! The slot ${formatDateDisplay(sc.date)} at ${sc.time} (${sc.mode}) for "${s.name}" is now fully booked (${cap}/${cap} persons reached). Please choose another available slot.`);
                         initDefaultSchedules();
                         renderSelectedServices();
                         dom.confirmBtn.disabled = false;
@@ -1257,14 +1356,18 @@ const initBookingApp = async () => {
                         time: sc.time
                     });
 
-                    // Don't lock 'Anytime' as it's flexible
+                    // Don't lock 'Anytime' as it's flexible. Each booking order counts as 1 person request per slot.
                     if (sc.time !== 'Anytime') {
-                        slotsToLock.push({
-                            date: sc.date,
-                            time: sc.time,
-                            mode: sc.mode,
-                            bookingId: orderId
-                        });
+                        const key = `${sc.date}|${sc.time}|${(sc.mode || 'Home').toLowerCase()}`;
+                        if (!orderSlotKeys.has(key)) {
+                            orderSlotKeys.add(key);
+                            slotsToLock.push({
+                                date: sc.date,
+                                time: sc.time,
+                                mode: sc.mode,
+                                bookingId: orderId
+                            });
+                        }
                     }
                 }
 
@@ -1349,6 +1452,17 @@ const initBookingApp = async () => {
                 }
 
                 if (EE_STORAGE.addBookedSlots && slotsToLock.length > 0) EE_STORAGE.addBookedSlots(slotsToLock);
+                firestoreBookedSlots = [...firestoreBookedSlots, ...slotsToLock];
+
+                try {
+                    const userBookings = EE_STORAGE.getUserBookings ? EE_STORAGE.getUserBookings() : [];
+                    const exists = userBookings.some(ub => ub && (ub.id === orderId));
+                    if (!exists) {
+                        userBookings.unshift(orderPayload);
+                        if (EE_STORAGE.setUserBookings) EE_STORAGE.setUserBookings(userBookings);
+                    }
+                } catch(e) {}
+
                 EE_STORAGE.setBooking(orderPayload);
                 localStorage.setItem('ee_current_invoice', JSON.stringify(orderPayload));
                 EE_CART.clear();
@@ -1437,6 +1551,9 @@ const initBookingApp = async () => {
                 if (data.fees) {
                     globalFees = data.fees;
                     localStorage.setItem('ee_global_fees', JSON.stringify(globalFees));
+                }
+                if (data.slotCapacity && Number(data.slotCapacity) > 0) {
+                    slotCapacity = Number(data.slotCapacity);
                 }
             }
         } catch(e) {}
