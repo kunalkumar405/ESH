@@ -112,9 +112,19 @@ const EE_STORAGE = {
             return [];
         }
     },
-        addBookedSlots: (newSlotsArray) => {
+    addBookedSlots: (newSlotsArray) => {
         const current = EE_STORAGE.getBookedSlots();
-        const updated = [...current, ...newSlotsArray];
+        const seen = new Set(current.map(s => `${s.bookingId || ''}|${s.date}|${s.time}|${(s.mode || 'Home').toLowerCase()}`));
+        const toAdd = [];
+        (newSlotsArray || []).forEach(s => {
+            if (!s || !s.date || !s.time) return;
+            const key = `${s.bookingId || ''}|${s.date}|${s.time}|${(s.mode || 'Home').toLowerCase()}`;
+            if (!seen.has(key)) {
+                seen.add(key);
+                toAdd.push(s);
+            }
+        });
+        const updated = [...current, ...toAdd];
         localStorage.setItem('ee_booked_slots', JSON.stringify(updated));
     }
 };
