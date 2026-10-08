@@ -177,6 +177,22 @@
 
             <!-- PAGE 1 (STEP 1): ONLY SELECTED SERVICES & SLOT PICKER -->
             <div id="bookingStep1" class="flex flex-col">
+                <!-- Slot Capacity Info Strip -->
+                <div class="mb-4 px-3.5 py-2.5 rounded-2xl bg-gradient-to-r from-ivory/90 via-white to-ivory/60 border border-muted-beige/60 shadow-subtle flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <div class="w-8 h-8 rounded-xl bg-[#9E2A5B]/10 flex items-center justify-center text-[#9E2A5B] flex-shrink-0">
+                            <span class="material-symbols-outlined text-[17px]">groups</span>
+                        </div>
+                        <div class="flex flex-col min-w-0">
+                            <span class="text-[11px] font-bold text-luxury-black truncate">Live Slot Booking • Capacity: 10 Persons</span>
+                            <span class="text-[10px] text-neutral-gray truncate">Up to 10 customers can book the same time slot</span>
+                        </div>
+                    </div>
+                    <button type="button" onclick="window.quickEditSlot()" class="px-2.5 py-1 rounded-lg bg-white border border-[#9E2A5B]/30 text-[#9E2A5B] text-[10px] font-extrabold uppercase tracking-wider hover:bg-[#9E2A5B] hover:text-white transition-all flex items-center gap-1 shadow-xs flex-shrink-0">
+                        <span class="material-symbols-outlined text-[13px]">tune</span> Set Slot
+                    </button>
+                </div>
+
                 <section id="booking-services" class="mb-6">
                     <!-- JS injects service cards with individual slot bars here -->
                     <div id="bookingServicesList" class="flex flex-col gap-4"></div>
@@ -405,15 +421,26 @@
             <div>
                 <div class="flex items-center justify-between mb-4">
                     <label class="text-[11px] font-bold uppercase tracking-wider text-neutral-gray">Select Time Slot</label>
-                    <div class="flex items-center gap-2 text-[10px] font-bold text-neutral-gray">
-                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-white border border-neutral-gray inline-block"></span> Free</span>
-                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-muted-beige inline-block"></span> Booked</span>
+                    <div class="flex items-center gap-2.5 text-[10px] font-bold text-neutral-gray">
+                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#2E8B57] inline-block"></span> Available (Up to 10)</span>
+                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-muted-beige inline-block"></span> Full (10/10)</span>
                     </div>
                 </div>
                 <!-- Anytime (Flexible) Button Container -->
                 <div id="anytimeContainer" class="mb-5"></div>
                 
                 <div id="timeContainer" class="flex flex-col gap-5"></div>
+
+                <!-- 4. Apply to All Services Toggle -->
+                <div id="modalApplyAllContainer" class="mt-5 pt-3.5 border-t border-muted-beige/40">
+                    <label class="flex items-center gap-2.5 p-3 rounded-xl bg-ivory/70 border border-muted-beige/50 cursor-pointer hover:bg-ivory transition-colors">
+                        <input type="checkbox" id="modalApplyToAllCheckbox" checked class="w-4 h-4 accent-[#9E2A5B] rounded cursor-pointer">
+                        <div class="flex flex-col">
+                            <span class="text-[11px] font-bold text-luxury-black">Apply slot to all selected services</span>
+                            <span class="text-[10px] text-neutral-gray font-medium">Keep the same timing across your booking items</span>
+                        </div>
+                    </label>
+                </div>
             </div>
 
         </div>
